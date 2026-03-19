@@ -1,0 +1,11 @@
+The mx and the nb commands work together.  The duration of a block of
+audio data and the total number of blocks are interdependent.  Changing
+one changes the other.  You can change them with either of these two
+commands, ms (milliseconds), or nb (number of blocks).  The minimum
+duration of a block is one millisecond, called an atom of sound, and
+the minimum number of blocks is two.  By default, block durations are
+1000 milliseconds, or one second in length, and the total number of
+blocks is therefore determined by the file size.  Type either ms or nb,
+press space, type the desired value, and press enter.  If you type either
+command without specifying a value, the current settings are reported.
+

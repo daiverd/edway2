@@ -1,0 +1,5 @@
+The pub command toggles between 'public' and 'private', alternative
+strategies for smoothing the loudness of audio data across all or
+part of a file.  The pub command affects only the smooth command, sm.
+Please type "h sm" for more details.
+

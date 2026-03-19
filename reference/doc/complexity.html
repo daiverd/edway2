@@ -1,0 +1,73 @@
+  <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<head>
+<title>COMPLEXITY</title>
+</head>
+<BODY BGCOLOR=#000000 TEXT=#FFFFCC LINK=#33CCFF VLINK=#FF6666>
+<h3 align=center>
+COMPLEXITY
+</h3>
+<p>&nbsp;</p>
+                         Measuring Complexity
+</p>
+
+<p>
+                       Charles Hallenbeck, Ph.D.
+</p>
+
+<p>
+                            September, 2007
+</p>
+
+<p>
+Visual inspection of a sound wave quickly reveals whether the sound is
+simple or complex. Listening to the sound is also a useful way to
+identify its simplicity or complexity. Those are subjective, intuitive
+methods. The viewer or listener is hard pressed to say exactly what it
+is that makes some sounds simple and others complex. What is needed is a
+way to quantify complexity, so that without viewing or listening to a
+sound, its complexity can be expressed in numerical terms.
+</p>
+
+<p>
+Wedit introduces a measure of complexity of a sound (version 1.0.38 and
+later) that shows promise. It is based on a ratio between the number of
+inflection points in a sound wave, i.e. changes of direction, and the
+number of times the sound changes from a plus value to a minus value or
+vice versa, i.e., the zero crossings. The measure has a minimum value of
+1.0, and ranges upward without limit as a sound becomes more complex.
+The complexity value is reported by Wedit whenever a sound wave is
+smoothed, and it is also included in the statistical display produced by
+the "list" command of the Wedit 3rd floor.
+</p>
+
+<p>
+The simplest audio signal changes direction only once
+between successive zero crossings. Examples are the sine wave, the
+sawtooth or triangular wave, and the square wave. Such sounds have a
+complexity of 1.0 as reported by Wedit. The measure does not depend on
+the loudness or the frequency of the sound.
+</p>
+
+<p>
+Between any two successive zero crossings, a sound wave must change
+directions an odd number of time. The Wedit measure counts only those
+changes of direction that promise to return to zero, i.e., only the odd
+numbered inflection points. Every time such an odd numbered inflection
+point occurs, a local maximum (or minimum) is created. Thus another
+interpretation of the complexity measure is a ratio between the number
+of local maxima or minima and the number of zero crossings.
+</p>
+
+<p>
+Early experience with this measure suggest that smaller values are
+easier listening, with values over about 3.0 becoming progressively
+less satisfactory. A particularly noisy track might have a value over
+10.0, and values of 100.0 and higher have been observed. When the time
+span of a track is displayed with a breakdown of tenths, the complexity
+value clearly identifies the location within the track of simpler and
+more complex portions. It is hoped that this measure will greatly aid
+the editing process, adding another analytical tool to those still
+valuable subjective ones.
+</body>
+</html>

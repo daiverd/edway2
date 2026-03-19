@@ -1,0 +1,10 @@
+The capture command, cap, creates a new session by capturing audio
+from the sound card.  If your mixer settings are right, simply type cap
+and press enter at a prompt.  You can press any key to stop capturing.
+If you need to change mixer settings when starting the capture, type cap,
+a space, and the word line, mike, or wave, and press enter.  Edway will
+look for and run a script named capline.edw, capmike.edw, or capwave.edw
+in that case.  The script capstop.edw is run when capturing stops.
+These files must be executable, and may be placed in any directory on
+the execution path, such as /usr/local/bin.
+

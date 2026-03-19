@@ -1,0 +1,5 @@
+Enter a double question mark, ??, and press enter, to get a report of
+memory being used by this session and other sessions, as well as the
+total memory being used by all sessions.  If a session has been labeled,
+its label is shown with this command.
+

@@ -1,0 +1,10 @@
+The move command, m, lets you rearrange blocks of audio data.  It needs a
+block address, or a comma separated pair of them, in front of the command
+to tell which blocks to move, and a single block address after it, to
+tell where to move it.  No spaces may appear from beginning to end of
+this command.  Omitting the addresses in front means to move the current
+block, and omitting the address following the m means to move the data
+to the current block.  The data to be moved are placed following the
+destination, unless the destination is block one, in which case they
+are moved ahead of it.
+

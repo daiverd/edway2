@@ -1,0 +1,13 @@
+-a , --auto <number>
+Conditionally change stereo to mono, and/or divide sample rate by two.
+The argument is the sum of 1 (change to mono) and 2 (divide sample rate).
+It changes stereo to mono only if the channels are identical.
+Edway computes the correlation coefficient between channels,
+and their average loudnesses. Files with coefficients below 0.98,
+with comparable loudnesses, remain stereo, others become mono.
+If correlation is higher and loudnesses are comparable,
+mono samples are averaged from the two channels,
+otherwise the dominant channel becomes the mono signal,
+and the weak channel is ignored. It divides sample rate by two only if it
+equals or exceeds 32000 samples per second.
+This cutoff rate and the channel parameters can be configured in edway.cfg.

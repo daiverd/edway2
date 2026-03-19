@@ -1,0 +1,4 @@
+The join command, j, appends the entire contents of another edit session
+onto the end of the current one.  The j must be followed immediately by
+the number of the edit session to be joined.  The data will be deleted
+from that session after it is joined to the current one.

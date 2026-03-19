@@ -1,0 +1,8 @@
+The variable speed command, vs, will change the speed, and therefore
+the duration, of an audio passage by a factor of 0.8 to 2.0.  Type vs,
+a space, and the factor by which the speed should change.  The effect
+will not change the pitch of the audio, but only its speed, or duration.
+Instead of a speed factor, you may type the desired duration as a time
+value.  a time value must have an M separating minutes and seconds,
+and may have an H separating hours from minutes.
+

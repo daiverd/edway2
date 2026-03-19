@@ -1,0 +1,5 @@
+The echo command, ek, applies an echo effect to the audio. This command
+invokes the sox helper program to apply the effect, Only an entire audio
+can be processed.  The optional argument is the delay in milliseconds, the
+default is 100 ms.  This represents an echo from a surface 55 feet away.
+

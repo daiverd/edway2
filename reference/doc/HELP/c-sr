@@ -1,0 +1,8 @@
+The sample rate command, sr, reports or changes the sample rate of
+the audio.  Type sr and press enter to report it.  Press sr, a space,
+and the desired value to change it.  Valid rates are between 5000
+and 50000 samples per second, or more accurately, frames per second.
+If the current rate and the desired rate are a multiple of two, Edway
+does the conversion itself.  If not, the helper program sox is invoked
+to do the conversion.
+

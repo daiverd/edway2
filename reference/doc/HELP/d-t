@@ -1,0 +1,2 @@
+-t , --timing
+Report playing time, sample rate, and channel structure of input files.

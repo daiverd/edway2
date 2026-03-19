@@ -1,0 +1,7 @@
+Unless it is qualified by an initial address, the equal sign reports
+the number of the last block of the audio stream. Preceded by a dot,
+or period, it reports the number of the current block.  If a mark has
+been set with the k command, e.g., kb or kx, the equal sign may be used
+to report the number of that block, by preceding it with an apostrophe,
+or tick, and the letter of the mark, e.g., 'b=or 'x=;
+

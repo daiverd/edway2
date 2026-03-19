@@ -1,0 +1,5 @@
+When you type an address and press enter, edway assumes you want to
+play the indicated block.  If however you only want to make that block
+the current block, and do not wish to play it, you may enter the block
+address followed by a slash.
+

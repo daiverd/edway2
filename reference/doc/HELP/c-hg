@@ -1,0 +1,8 @@
+HistoGram. The hg command displays a histogram of sample amplitudes in
+the file.  The command may be preceded by a block address, or a comma
+separated pair of block addresses, to limit the display to a selected
+block or range of blocks.  By default, only five categories are shown,
+but this may be changed to seven or eleven for a more detailed display.
+Enter hg, a space, and one of 5, 7, or 11, then press enter.  The values
+shown are normalized to total 100, thus avoiding the display of very
+large numbers.

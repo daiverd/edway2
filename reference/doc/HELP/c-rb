@@ -1,0 +1,6 @@
+The retain blocks command, rb, keeps selected audio samples from the
+current session, deleting all samples that lie outside a specified range.
+It must be qualified by a comma separated pair of block addresses,
+to define which samples are to be kept.  After the deletion, any marks
+that existed in the session are adjusted appropriately.
+

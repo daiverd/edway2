@@ -1,0 +1,11 @@
+The z command supplements the p command, to enhance the playing of
+audio data. The command may be preceded by a block address where play
+is to begin. If omitted, play resumes where it left off. The z may be
+followed by a span of time to be played in seconds, with a default of
+five seconds. Omitting this value causes the previous span to be used.
+Thus, to play audio in chunks of ten seconds, beginning with block 11,
+you would first type 11z10 and press enter. To read subsequent ten second
+chunks, type z, press enter, type z, press enter, etc. If a block is
+longer than 1000 milliseconds, i.e. one second, the span value is the
+number of blocks instead of the number of seconds.
+

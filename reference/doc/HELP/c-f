@@ -1,0 +1,5 @@
+Type f and press enter to show the current name of the target file.
+Type f, a space, and a new name to change that name.  The new name may
+optionally include a suffix, which will be checked against a list of
+suffixes known to be writable.
+

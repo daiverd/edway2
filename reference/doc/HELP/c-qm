@@ -1,0 +1,5 @@
+The question mark command reports the names of the source file and the
+target file.  It also reports the playing time of the target file, its
+sample rate and channel structure, and the number of blocks and block
+duration in milliseconds for the target file.
+

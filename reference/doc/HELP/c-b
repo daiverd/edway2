@@ -1,0 +1,11 @@
+The backup command, b, creates and deletes a pair of session backup files
+in the user's tempfile or configuration directory, and also enables and
+disables autosave.  The backup command, b, cooperates with the undo
+command, u.  Type b to inquire if a backup exists.  Type b kill to
+delete an existing backup and enable autosave.  Type b save to create
+a new backup and disable autosave.  When autosave is enabled, several
+commands will automatically perform a backup before they execute, and
+the undo command, u, will delete the backup when a restore succeeds.
+The commands protected by autosave are: d, ek, fi, fo, gen, m, mx, rb,
+t, bs, bpf, hpf, and lpf.
+

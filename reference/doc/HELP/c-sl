@@ -1,0 +1,6 @@
+The sound level command, sl, reports or changes the default 0 dB sound
+level.  Type sl and press enter to report it.  Type sl, a space, and
+the desired value to change it.  The default value is 3277.  The 0 dB
+sound level used in edway is the RMS value of a set of samples over a
+time interval.
+

@@ -1,0 +1,4 @@
+Type ft and press enter to show the current suffix of the target file.
+Type ft, a space, and a new suffix to change it.  The new suffix will
+be checked against a list of suffixes known to be writable.
+

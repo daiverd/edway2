@@ -1,0 +1,73 @@
+Edway
+
+A Line-Oriented Audio Editor
+
+by Chuck Hallenbeck: chuckh@ftml.net
+
+Edway is a Linux text console program which emulates the line-at-a-time
+editors ed, edbrowse, fred, or qed, applying many of their commands to
+the task of editing audio files.
+
+Of Course there are no "lines" of audio, but instead blocks of samples
+of arbitrary length serve a similar purpose.  Instead of printing lines
+of a text file to the screen, Edway plays blocks of samples on the host
+computer, using the alsa library interface.  The user can, for example,
+read or write to an edit session or file (using R or W), play a block
+of samples or range of blocks (using P), move or transfer blocks of
+samples within a file (using M or T), mark a block for subsequent
+reference (using K), and delete a range of blocks (using D), in the
+familiar line editor command syntax.  The conventions of using a dot
+to reference the current block and a dollar sign to reference the last
+block of a file are maintained.  The equal sign reports the current
+block's number, a marked block's number, or the last block's number,
+as with line editors.  The question mark describes the parameters of the
+current file.  The exclamation point drops to a shell in the usual way.
+The Z command functions exactly as with a line editor, as does the F
+command, to report or change the filename.
+
+Additional specialized two-or three letter commands using the same
+syntax perform audio-specific chores, such as changing sample rate
+or the number of channels (using SR and NC), changing the file type
+(using FT), selecting the duration of blocks or the number of blocks
+in the file (using MS or NB), applying a gain control (using DB), or
+displaying the loudness of a block or range of blocks (also using DB,
+but with a parameter), and others.
+
+Installation
+
+Caution: Before attempting the following, make sure your system has these
+libraries available, which may not be routinely installed from the start:
+1. readline, 2. ncurses, 3. libsndfile, and 4. libasound.
+
+1. Unpack the program tarball, and enter the resulting directory.
+
+2. Type "make" and press enter.
+
+3. As root, type "make install" and press enter.
+
+If everything worked okay, you have an executable program called "edway"
+in /usr/local/bin.  There is no global configuration. Each user has his
+or her own configuration directory, created the first time edway is run
+by the user, called ".edway". 
+
+Edway can capture audio from the system's sound card.  Four executable
+scripts are required to do this: capline.edw, capmike.edw, capwave.edw,
+and capstop.edw.  Samples of these files can be found in the user's
+configuration directory, and must be moved to a directory where they
+can be executed.  The sample files work for the snd_intel8x0 driver,
+but may need to be rewritten for other drivers.  The user is responsible
+for rewriting these scripts.
+
+Edway is a work in progress" (I hate that phrase too), but its present
+form provides sufficient functionality to be of interest to the
+courageous.  Online documentation is not complete at present, but will
+grow as the program matures.  For starters, type "edway -h" at a command
+prompt.  Then enter the program by typing "edway" and pressing enter.
+Now type the command 'h' and press enter to access the edway manual with
+your favorite browser.  Alternatively, you may type h, a space, and an
+edway command or option, for online help with that command or option.
+
+August, 2009
+
+Download from edway.ftml.net, our weblog at edway.wordpress.com
+

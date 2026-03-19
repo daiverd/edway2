@@ -1,0 +1,6 @@
+The band pass filter command, bpf, is part of a group of filter commands
+consisting of bpf, hpf, and lpf.  These commands invoke the sox helper
+program to apply a band pass, a high pass, or a low pass filter,
+respectively, to the audio.  The usual default cutoff frequencies are
+300 and 3000 Hz, optimized for pitched samples (i.e., voice and music).
+Only an entire audio can be filtered.

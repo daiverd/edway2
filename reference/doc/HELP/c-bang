@@ -1,0 +1,6 @@
+Suspend the program and run a shell, or a shell command.  The shell
+command and any arguments can be included on the line with the exclamation
+point, or bang, optionally separated from it by a space.  Alternatively,
+the exclamation point can be entered alone, and a shell will be run
+allowing the user to interact with it. Typing exit at the shell prompt
+returns to the edway prompt.

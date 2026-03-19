@@ -1,0 +1,6 @@
+-c , --convert <filename | suffix | filename+suffix>
+Runs edway non-interactively to convert files to another format.
+The argument is normally the suffix indicating the format desired,
+such as mp3 or ogg. However, if only one file is to be converted,
+the argument may also be the desired name of the output file,
+with or without a suffix. See help on writable file formats for a list of suffixes.

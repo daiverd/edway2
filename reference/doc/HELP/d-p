@@ -1,0 +1,14 @@
+-p , --play
+
+Play a set of audio files. While playing, pressing space pauses play,
+pressing space again resumes it. Moving backward and forward is done with
+b (6 seconds back), capital B (60 seconds back), less-than (600 seconds
+back), left-bracket (back to the start), or with f (six seconds forward),
+capital F (60 seconds forward), greater-than (600 seconds forward),
+or right-bracket (6 seconds before the end).  If a number of files is
+being played, pressing n moves to the next item in the list, pressing
+p moves to the previous item, and pressing q stops play and exits.
+A bookmark is saved so that an interrupted file can be resumed where
+it was interrupted.  During play, or while paused, pressing the comma
+reports file position in minutes and seconds, pressing period reports
+it as the percent of the file already played.

@@ -1,0 +1,10 @@
+The play command, p, is Edway's equivalent to the line editor's print
+command, since audio data are not printed, they are played.  Type a
+block address, or a range of addresses, the letter p, and press enter.
+Play may be interrupted by pressing any key.  The block where play
+stops then becomes the current block.  To play the entire audio, you may
+type "1,$p", or ",p" or simply "," without the quotes.  Typing a block
+address and pressing enter moves to the selected block and plays it.
+Pressing enter alone moves ahead and plays the next block.  Pressing p
+alone, or a period, replays the current block.
+

@@ -1,0 +1,440 @@
+Change Log
+
+December 5, 2010
+
+Version 0.2.9 corrects a problem in the computation of new blocksizes and
+block counts, which has sometimes resulted in the current line pointer
+having a higher value than the highest block number.  The "out of bounds"
+condition that resulted made it impossible to access most of edway's
+common editing commands.
+
+October 6, 2010
+
+Version 0.2.8 corrects a problem in the generation of unique temporary
+filenames.  This problem risks leaving orphan files in the user's .edway
+directory, and hopefully will not recur with this release.
+
+Whenever a trv or a trw source is saved to another format, a safe
+samplerate is used; 8000 by default, or a setting obtained from edway.cfg.
+The only way the original samplerate of 6000 will be used is writing
+(or rewriting) a trv or trw file.
+
+Everywhere the user enters a samplerate, a one- or two-digit abbreviation
+is also accepted.  The valid values are 8, 11, 16, 22, 32, 44, and 48.
+They are abbreviations for 8000, 11025, 16000, 22050, 32000, 44100,
+and 48000 samples per second.
+
+October 3, 2010
+
+Version 0.2.7 preserves the location of the current pointer when
+block size is changed with the ms command.  Fading is now performed
+proportionally to the power of the audio signal, rather than to its
+amplitude, and thus follows the perceived loudness more closely than
+before.  Silent leaders and trailers will interfere with fading in and
+fading out, respectively, and of course smoothing should never be done
+after fading.  Amplitude adjustment with the db command is okay either
+before or after fading, but smoothing should only be done before fading.
+Thanks to Luke Davis for helping to identify these issues.
+
+September 11, 2010
+
+Version 0.2.6 corrects the placement of the current pointer following the
+gen command, conforming to the other commands which change the size of
+the current audio: d, m, r, rb, and t.  Any marks set with the k command
+are also adjusted appropriately.
+
+The "retain blocks" command, rb, is new with this version.  It is the
+complement of the delete command, d, allowing the user to specify a range
+of blocks to be retained while blocks outside this range are deleted.
+
+The autosave feature was extended to a number of other commands where
+it might be useful, and several online help files have been updated.
+Nothing in this revision is a critical fix that might require the casual
+user of Edway to uppdate, it only adds a number of useful features that
+not everyone will find of interest.
+
+September 9, 2010
+
+Version 0.2.5 corrects the placement of the current pointer following the
+m, r, and t commands, as was done for the d command in the last release.
+In addition, marks that were set before any of these commands were issued
+are adjusted appropriately afterward.
+
+This release also corrects a serious issue with the creation of
+backup files, introduced in 0.2.3 when runflag protection was removed.
+Backup file names were dynamically generated as needed, but unfortunately
+were not deleted unless the undo command, u, was issued.  This resulted
+in the proliferation of stale backup files, a bad situation.  Version
+0.2.5 corrects this problem. Backup files are now removed upon program
+termination, even if not "undone" during program execution.
+
+September 7, 2010
+
+Version 0.2.4 corrects the placement of the line pointer following
+the deletion of a block of audio while editing.  It also removes the
+--greeting, or -g, command line option.  Finally, it adds a variable
+called "TempPath" to the configuration file allowing the user to specify
+an alternative location for the backups and temporary files.
+
+If TempPath is set to null, the default, the configuration directory is
+used for backups and temp files.  This is in the user's home directory,
+and is guaranteed to be writable.  But the home partition is not always
+large enough for such files.
+
+If the TempPath variable is set to a directory whose name begins with a
+slash (/), an absolute pathname is defined, i.e., a system-wide location.
+This choice is not recommended due to a variety of possible permission
+problems.  If you use it, you better know what you are doing.
+
+If the TempPath variable is set to a directory whose name does not begin
+with a slash (/), the current working directory is used as the location
+of the directory.  In either case (with or without the leading slash)
+the directory will be created if it does not exist.
+
+September 3, 2010
+
+Version 0.2.3 provides a command line option (-i, --ignore) to suppress
+both manual and automatic backups when editing with Edway, and accessing
+the history file when playing a file.  These are the features most
+likely to cause trouble when a single user runs multiple copies of Edway.
+If you know you will not need these features on a given run, it is wise to
+include this option on the command line along with any other options used.
+It has no effect when converting a file nor when reporting its statistics.
+
+In addition, when the history file is used, it is now read immediately
+prior to being rewritten, thereby reducing the window of vulnerability
+during which another instance of Edway might collide with bookmark
+maintenance.
+
+September 2, 2010
+
+Version 0.2.2 removes the restriction preventing the same user from
+running two or more copies of edway.  There is no more runflag, hence
+no more -x or -X command line options.  The user is cautioned, however,
+that edway is a memory hog, and running two or more memory hogs might be
+asking for trouble.  But if that's what you want to do, then you should
+be able to do it.
+
+August 31, 2010
+
+Version 0.2.1 no longer supports playing internet radio streams.
+A new package, radio, is available from edway.ftml.net to perform this
+service as a stand-alone application.  Samplerate is no longer set
+with the options -0, -1, -2, -3, -4, -5, -6, -7, -8, and -9, and the
+number of channels is no longer set with the -m and the -s options.
+Instead, the -r option is now used.  The option -r must be followed
+by the desired sample rate, and the rate may be followed immediately
+by the letter M or the letter S to specify mono or stereo if desired.
+Recognized samplerates are: 6000, 8000, 11025, 12000, 16000, 22050,
+24000, 32000, 44100, and 48000.  The short forms 6, 8, 11, 12, 16, 22,
+24, 32, 41, and 48 are equivalent to the values listed above.
+
+August 26, 2010
+
+Version 0.1.29 updates the computation of dynamic ranges to seek a balance
+between sensitivity and stability. The parameters that were changed are
+not available for the user to modify without recompilation.  Interested
+"super-users" should consult DRTAIL, DRCUT, and DRLEN, defined in edway.h,
+and referenced in support.h (functions amplitude and smoothnit).
+
+August 20, 2010
+
+Version 0.1.28 updates the smoothing function, available when editing or
+converting audio files.  The dynamic range of the audio is now measured
+for material longer than 60 seconds in length, and a new parameter is
+available to specify how small the dynamic range must be to indicate that
+smoothing is not necessary.  The parameter is settable in the revised
+configuration file.
+
+Dynamic range is defined as the ratio between two loudness values observed
+in the file.  One value is the loudness below which seven percent of the
+intervals fall, and the other is the loudness above which seven percent of
+the intervals fall.  An "interval" is a one-second segment of the audio
+being edited or converted.  Audio files shorter than a full minute are
+always smoothed if requested, but those longer than a minute are first
+checked to see if they really need smoothing.  The default value of 4.0
+dB can be modified in the file edway.cfg in the user's .edway directory.
+
+Output from the smooth function now reports the measured dynamic range,
+allowing the user more guidance in selecting the parameter values of
+SmoothTime, SmoothDrop, and SmoothRangeDB that achieve the best results.
+In the case of all three parameters, smaller values yield more aggressive
+smoothing.
+
+July 31, 2010
+
+Version 0.1.27 allows the user to cancel a write operation when
+an impending overwrite is detected.  The choices are now "Type O
+to overwrite, C to cancel." Any other response write to a uniquely
+generated filename.
+
+In addition, numerous minor fixes were performed, a few user messages
+were streamlined, and the smoothing function was somewhat improved.
+
+July 9, 2010
+
+Version 0.1.26 implements the conversion of audio sources using 24 bit
+samples to the signed 16 bit samples required by edway.  A number of
+obscure bugs causing segmentation faults were corrected.  There were
+no changes to user commands, although some streamlining of on-screen
+messages was achieved.
+
+June 10, 2010
+
+Version 0.1.25 implements the following changes:
+
+1. The join command, j, always appends the specified edit session to
+the end of the current session.  The location of the pointer at the time
+the command is issued is no longer respected.
+
+2. When capturing audio with "cap line" or "cap wave," stereo data will
+result. When capturing with "cap mike" however, the captured data will
+be monaural.
+
+April 19, 2010:
+
+Version 0.1.24 of Edway adds a new file type, .ogv, to the list of types
+that are readable by edway.  The ogg/vorbis video protocol uses this
+file type.
+
+April 4, 2010:
+
+Version 0.1.22 of Edway corrects an error in calculating blocksize and
+number of blocks.
+
+March 26, 2010:
+
+Version 0.1.21 of Edway revises the calculation of block size and block
+number, resolving two problems.  After allowing block sizes as small
+as one millisecond, occasional integer overflows have been found when
+requesting very large block sizes, such as a full minute.  Those overflows
+resulted in a negative number of blocks, and will no longer occur.
+
+Second, when requesting a specific number of blocks, and the residual
+number of frames would permit more blocks of the same size, the result
+is adjusted upward so that any residual is less than a whole block.
+This correction has always been in effect.  The change here is that the
+result is reported instead of being implemented silently.
+
+March 13, 2010:
+
+Version 0.1.20 of Edway corrects two problems, one affecting navigating
+through files with edway in "player mode", and the other when editing
+files of less than two seconds duration.
+
+When playing an audio with "edway -p" stereo files were navigated at
+twice the rate of mono files.  That condition is now corrected.
+
+When editing files less than two seconds in duration, the default
+blocksize of 1000 milliseconds resulted in fewer than two blocks being
+created.  The minimum number of blocks now takes precedence over the
+default blocksize, improving the accuracy of editing short files.
+
+February 16, 2010:
+
+Version 0.1.19 increases the resolution of edway to one millisecond
+"atoms" of audio, making the previous minimum block size of 25
+milliseconds irrelevant.  It is now an atom of sound that is marked with
+the k command, rather than a block.  This results in the preservation
+of marks as block size is increased or decreased.  Marking a block is
+accomplished by marking an atom within the block, located at or near the
+block's center.  Operations performed on blocks containing a marked atom
+continue to affect the entire block as before, so the user may notice
+little difference in behavior.
+
+The fade-in and fade-out commands, fi and fo, are added to the list of
+commands protected by autosave.  The z command is modified to permit
+overriding the default of five seconds with any value of one second
+or more.  The default value in earlier versions could only be enlarged
+beyond five seconds, not reduced.
+
+December 15, 2009:
+
+Version 0.1.17 permits changing the default quality of files written in
+ogg/vorbis.  The configuration file contains the variable OggQuality,
+default 3.0, valid values are from -1.0 to +10.0.  The command "oq"
+permits changing the quality during interactive sessions.
+
+When edway is used in player mode (with the -p option) and a file is
+opened which has been saved with a bookmark set, the position of the
+bookmark is reported when the user is asked about resuming play.
+
+November 12, 2009:
+
+Version 0.1.16 corrects a problem in the generation of a new filename
+when Edway must avoid filename collisions.
+
+November 3, 2009:
+
+Revision 0.1.15 fixes the delete command, d, which caused edway to crash
+when deleting all the blocks of an audio.  The d command was also added
+to the list of commands protected by the autosave feature.
+
+October 31, 2009:
+
+Version 0.1.14 corrects two problems. When adding a station to the stored
+list of internet radio stations, multi-word memo fields were truncated
+to only the first word.  They now are entered correctly.
+
+When playing an audio file and wishing to abort play without saving
+information about the file, the best way was to jump ahead with the
+right-bracket (]) to six seconds before the end and let the remaining
+audio play out.  If the right-bracket were to be pressed again during this
+six second period, the remaining six seconds would start playing again,
+surely not what was desired.  Now the second press of right-bracket
+terminates play immediately.
+
+October 29, 2009:
+
+Version 0.1.13 of Edway offers no new commands or options, but does offer
+the means of ripping, or capturing to a file, audio from an internet
+radio stream while it is playing.  During play of any stream, type an
+r to commence the capture.  Type a q to terminate it.  A second q will
+terminate play if no capture is in progress.  Files resulting from this
+process are written to the current directory, and will have unique names
+of the form radio1.wav, radio2.wav, radio3.wav, etc.  All captures will be
+done in stereo at 22050 frames per second, using 16 bit signed samples.
+This feature requires that the user prepare the scripts capwave.edw and
+capstop.edw containing suitable mixer commands to configure the sound
+card for capturing audio being played, and for restoring default settings
+when finished.  Sample scripts are supplied with edway, but are likely
+to require modification for each user's sound card setup.
+
+October 27, 2009:
+
+Version 0.1.12 supports the reading and writing of files using the
+adaptive multirate format, i.e., files with the suffix .amr, or .3gp.
+The helper FFmpeg is used, and must be configured with support for the
+AMR libraries, amrnb and amrwb.  Such support is not always provided by
+default in Linux distributions.  With archlinux however, it is easily
+obtained by retrieving and installing three packages from AUR, the
+Archlinux User Repository.  They are: amrnb, amrwb, and ffmpeg-amr.
+To check if a given ffmpeg utility does or does not support these
+libraries, simply run ffmpeg with no arguments.  If "libamr" appears in
+the list of configuration options, you are in business.  These formats
+are used for mobile phones and portable readers, and appear to differ
+only in that .amr files use floating point arithmetic, while .3gp files
+used fixed point.
+
+October 25, 2009:
+
+Version 0.1.11 implements output of realmedia files with the .rm suffix,
+using the helper ffmpeg.  The echo command, now spelled 'ek', allows
+selecting the delay time as an argument.  It is specified in milliseconds,
+with a default of 100, corresponding to an echo from a surface 55 feet
+distance.
+
+October 23, 2009:
+
+Version 0.1.10 implements the echo command, ek, to add a small amount
+of echo to an entire audio.  It also restores the use of lame to decode
+mp3 files, since the required library support for sox is often missing.
+A number of minor problems are also addressed in this release.
+
+October 21, 2009:
+
+Version 0.1.9 introduces commands for mixing audio, fading audio in and
+out, labeling and backing up a session, and undoing changes.
+
+The mix command, mx, mixes audio from another session into the current
+session.  The location within the current session where mixing starts
+is specified by a block address preceding the command name.  If a second
+block address is also given, the range of the mix is bounded.  The session
+to be mixed is given by a session number immediately following the command
+name.  If the material being mixed is to be faded, the time period over
+which to fade is given as one or two space separated values. The time
+is in seconds.
+
+The backup command, b, and the undo command, u, save and restore an edit
+session using a pair of files in the user's configuration directory.
+The b command also enables and disables autosave mode, in which
+several edway commands automatically perform a backup before executing.
+The backup files are deleted after a successful restore in autosave mode,
+or when edway exits normally.  The commands protected by autosave are:
+mx, vs, bpf, hpf, and lpf.
+
+The label command, l, attaches an arbitrary label to a session. Multiple
+word labels do not need to be quoted.  Type l, a space, and a dash to
+unlabel a session.  Labels help to clarify some displays, such as that
+produced by the double question mark command.
+
+The fade-in and fade-out commands, fi and fo, gradually increase the
+amplitude at the start of an audio, and gradually decrease it at the end,
+respectively.  Each command takes as an argument the number of seconds
+over which fading should be done, with a default of one second if the
+argument is omitted.  Fading is linear when the fading time is more than
+two seconds, and is S-shaped, or an ogive, when two seconds or less.
+
+
+October 10, 2009:
+
+Version 0.1.8: Fixed a bug in the gen command. This command always
+adds newly generated material to the current session, but will create a
+session if none exists.  To generate audio in its own session, create that
+session first with e, move to it if necessary, then use the gen command.
+
+October 9, 2009:
+
+ Version 0.1.6: Fixed a bug in the write command, which occurred when
+ writing a portion of a stereo stream, either to another session or to
+ a file. My thanks to David Sexton for spotting this one.
+
+October 1, 2009:
+
+Version 0.1.5: Adopted an exit code to signal failure to convert an audio
+file when using the --convert (-c) option.  The value 0 is success,
+the value 1 is failure. This facilitates using edway in a script to
+convert files.
+
+The variable speed command, vs, now changes speed without changing pitch,
+and accepts either a speed multiplier argument between 0.8 and 1.8,
+or a time value string.  The string must contain either the letter H or
+the letter M, upper or lower case, with appropriate numbers before them
+and between them. Examples are: 0m50, 1m6.5, 3m, 1h30, and 1h10m30.
+
+Edway with the --radio option (-r) now allows an alternative to the
+default configuration directory as a place where local playlist files
+may be placed.  The configuration file, edway.cfg, is where you specify
+such an alternative.
+
+September 26, 2009:
+
+Version 0.1.4: Numerous changes to bring the source code into more
+standard compliance, with grateful thanks to Chris Brannon.
+
+Also added two additional navigation commands to Edway when using
+the --play option: left-bracket ([) restarts the current file, and
+right-bracket (]) goes to six seconds before the end of the current file.
+Six seconds is long enough to issue other navigation commands if desired.
+Thanks to Paul Migliorelli for these.
+
+September 23, 2009:
+
+Changed the name of the script "stopcap.edw" to "capstop.edw" for
+consistency with the other capture scripts.  Added the commands c and g
+as synonyms of cap and gen.  Fixed a bug in the d command when deleting
+samples from a stereo stream.  Added a number of help files for the many
+editing commands and command line options.
+
+September 21, 2009:
+
+Release 0.1.3.  Added the edit command cap to capture audio from the
+sound card.  The cap command optionally has an argument "line", "mike", or
+"wave", to execute a user-written script called capline.edw, capmike.edw,
+or capwave.edw, if found somewhere on the path.  The user-written script
+capstop.edw will be executed, if one is found, when capturing stops.
+
+Also added the generate command, gen, to create silence, sine waves,
+square waves, or sawtooth waves.  See "h gen" for examples of usage.
+
+September 18, 2009:
+
+Release 0.1.2.  Fixed bug in --auto option.  Added edit command vs,
+variable speed.  Added edit command j, join sessions.  Added sox
+conversion of WAV files that are not PCM_16.  Revised online help
+facilities, still skimpy, but more easily maintained.
+
+September 16, 2009:
+
+First release of Edway 0.1.1, with sufficient functionality to be useful,
+but with a short list of features not yet implemented.

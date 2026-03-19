@@ -1,0 +1,12 @@
+The read command, r, is used to read audio data from a file, or from
+another edit session.  Type r, a space, a filename, and press enter,
+to read from a file.  Wildcard characters are supported. Each matching
+file is placed in its own edit session.  Filename completion is supported
+by pressing the tab character.  To read from another edit session, tell
+the r command where to insert the data by typing a block address first,
+then the r, and without a space, the number of the session to be read.
+The sample rate and number of channels of the new data will be converted
+to match those of the current session.  A file is said to be "readable"
+if it can be accessed by the libsndfile library, or if it has one of
+the supported filename suffixes.
+

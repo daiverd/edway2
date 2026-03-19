@@ -1,0 +1,13 @@
+Type nc and press enter to see the number of channels of audio, 1 or 2,
+mono or stereo.  To change the number of channels, type nc, a space,
+and the number 1 or 2.  Two other values may also be used, 3 or 4,
+but they will not create three or four channel audio.  If the data
+are mono, typing nc 3 creates a stereo format by using only the left
+channel for the data, with an empty right channel.  Typing nc 4 places
+the data in the right channel only, with the left channel empty.  If the
+original data are stereo, typing nc 3 creates monaural data from the
+left channel only, discarding the right channel.  Typing nc 4 creates
+monaural data from the right channel only, discarding the left channel.
+It is therefore critical to know if the current session contains monaural
+or stereo data before using the nc command to change it.
+

@@ -1,0 +1,4 @@
+With no argument, the oq command shows the current setting of ogg
+compression quality. Use an argument between -1.0 and +10.0 to change
+the setting.
+

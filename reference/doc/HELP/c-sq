@@ -1,0 +1,10 @@
+The squeeze command, sq, is a port of the wedit algorithm for limiting
+long intervals of silence within an audio sample.  The duration
+of the file is shortened by removing sequences which fall below a
+specified loudness level, and which last longer than a specified time.
+The thresholds for loudness and time may be set in the edway configuration
+file, edway.cfg.  They may also be supplied as a comma separated pair
+of numbers as arguments to the sq command.  You may also restrict the
+action to a portion of the file by preceding the sq command by one or
+a comma separated pair of block addresses.
+

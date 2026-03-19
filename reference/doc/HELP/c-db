@@ -1,0 +1,14 @@
+The decibels command, db, reports data on all or part of an audio file,
+both monaural and stereo.  The command may be qualified by one or a
+comma separated pair of initial addresses to limit the portion of the
+file to be reported.  The user is shown the sound level, the maximum
+excursions in the negative and positive directions, and the value of a
+possible DC component.  Separate values for left and right channels are
+not reported, use the cs command for that purpose.  To report the entire
+file, use one of these equivalent forms: ",db" or "1,$db".  The db command
+can also be used to modify the sound level of a file.  Type db, a space,
+and the decibel level or RMS value desired.  Values between -60 and +20
+are taken as decibel levels, values above +20 are taken as RMS values.
+The initial address or address range may be used when modifying loudness,
+as well as when reporting it.
+

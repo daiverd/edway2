@@ -1,0 +1,4 @@
+The commands verbose and unverbose, v and uv, raise and lower the
+verbosity level by one, respectively.  The higher the level, the more
+the output sent to the screen; the lower the level, the less the output.
+

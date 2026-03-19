@@ -1,0 +1,22 @@
+The smooth command, sm, is an algorithm for reducing variations in
+loudness, or dynamic range, in an audio passage.  The sm command may be
+qualified by one or a comma separated pair of block addresses to limit
+the action to a portion of the session.  It may be followed by a space,
+and a comma separated triple of arguments if desired.  The first of these
+is the time span in seconds over wich smoothing is computed. The second
+is a digit, 0 or higher, indicating how much suppression to apply to
+very weak signals.  The third parameter is the dynamic range in decibels
+signifying that an audio passage is already sufficiently smooth.  It is
+used to cancel smoothing for material longer than 20 seconds when there
+is no benefit to be gained from smoothing, which is computationally
+costly to perform.
+
+Privately smoothing aims at a uniform loudness no higher than the default
+RMS value, using only linear adjustments.  Publicly smoothing relaxes
+the requirement of linearity, in order to achieve the default loudness
+more aggressively.  Smoothing privately yields better quality, perhaps at
+lower average loudness.  Smoothing publicly yields more uniform loudness
+across a number of audio files, perhaps at the cost of introducing some
+nonlinear distortions.  The pub command is used to toggle between public
+and private smoothing.
+

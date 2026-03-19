@@ -1,0 +1,4 @@
+-f , --flag
+Set a quietflag in /var/tmp, and delete it on exit.
+This flag may be checked by competing user applications to avoid sending audio
+output while edway is running.

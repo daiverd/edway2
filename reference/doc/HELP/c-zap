@@ -1,0 +1,5 @@
+The zap command deletes all data belonging to the current edit session and
+resets all associated parameters to their default condition.  The session
+is not deleted.  A subsequent read command will repopulate the current
+session by default.
+

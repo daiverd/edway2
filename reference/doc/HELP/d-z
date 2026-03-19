@@ -1,0 +1,5 @@
+-z , --zap <number>
+Controls the zapping of files. The number may be:
+1., zap (delete) the source file if conversion succeeds; 2.,
+zap (overwrite) the target file if it already exists; or 3.,
+both 1 and 2 above.

@@ -1,0 +1,9 @@
+-e , --engine <tts-script>
+Execute a user-defined script to convert a text file to audio.
+A sample script, william, shows how this is done.
+The script may be placed in /usr/local/bin,
+and should accept parameters supplied by edway when the script is executed.
+The first parameter is the name of the file to be translated,
+the second is the name of the wav file that results,
+and the third is the speaking rate to be used.
+The script may choose to ignore the third parameter if desired.

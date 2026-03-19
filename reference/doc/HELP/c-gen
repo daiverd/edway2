@@ -1,0 +1,25 @@
+The generate command, gen, creates new audio of various forms.  Here are
+some examples of usage:
+ * gen 30 
+ Generates 30 seconds of silence.
+ * gen 30 sin 
+ Generates a 30 second sine wave at 440 Hz.
+ * gen 30 sin 1000 
+ Generates a 30 second sine wave at 1000 Hz.
+ * gen 30 sqw 
+ Generates a 30 second square wave at 440 Hz.
+ * gen 30 sqw 1000 
+Generates a 30 second square wave at 1000 Hz.
+And similarly for stw, for sawtooth wave forms. This command has
+additional features not yet implemented, but these form a useful starter
+set.  Where the frequency is given, a pair of frequencies separated by a
+colon may be used, giving a range of frequencies to be swept, as in this:
+ * gen 10 sqw 100:6000
+The sqw and stw options permit appending a single digit from 1 to 9,
+which governs the shape of the square wave or sawtooth wave produced.
+For sqw, the digit controls the proportion of positive to negative signal.
+The default is 5, for 50%.  For stw, 5 means a symmetrical sawtooth,
+and is the default.  A smaller value is a positive sloping sawtooth, and
+a higher value is a negative sloping one.  In all cases, the generated
+audio will be inserted into the current edit session if a block address
+precedes the command name, or will be joined to the end of it otherwise.

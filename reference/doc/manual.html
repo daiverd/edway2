@@ -1,0 +1,398 @@
+  <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<head>
+<title>EDWAY USER MANUAL</title>
+</head>
+<BODY BGCOLOR=#000000 TEXT=#FFFFCC LINK=#33CCFF VLINK=#FF6666>
+<h2 align=center>
+Edway User Manual
+</h2>
+Edway is an interactive text-mode editor for audio files, in the style
+of ed, edbrowse, or their mainframe counterparts: fred, or qed.  To edit
+an audio file, you might type something like this: 
+<br>
+edway &lt;filename.ext&gt;
+<p>
+Command line options convert edway into several other non-interactive
+audio tools:
+<p>
+To convert a file or files into another format:
+<br>
+edway [options] -c &lt;format&gt; filenames ... | pathnames ...
+<p>
+To play audio files, with pause, navigation, and automatic saving of bookmarks:
+<br>
+edway [options] -p filenames ... | pathnames ...
+<p>
+To report the playing time and several other audio file parameters:
+<br>
+edway [options] -t filenames ... | pathnames ...
+<p>
+Other command line options are available to control these actions.
+A list of command line options, and lists of readable and writable file
+types, are found in the documentation.
+<h3 align=center>
+General editing help.
+</h3>
+Edway is an audio file editor, an audio file converter, an audio file
+player, and an audio file statistics reporter.
+For help with specific edit commands, type 'h <command-name'.
+<p>&nbsp;</p>
+<h3 align=center>
+Appendix X
+<p>&nbsp;</p>
+Command Line Options
+</h3>
+<p>&nbsp;</p>
+<p>
+All options have a short form (a dash and a letter) and a long
+form (two dashes and a word).  A few require an argument,
+separated from the option by a space or an equal sign.  Three of the
+options convert Edway from an audio editor to a special purpose audio
+tool. They are: -c or --convert, -p or --play, and -t
+or --timing.  The complete list of options follows.
+</p>
+<p>
+-a , --auto &lt;number&gt;
+<br>
+Conditionally change stereo to mono, and/or divide sample rate by two.
+The argument is the sum of 1 (change to mono) and 2 (divide sample rate).
+It changes stereo to mono only if the channels are identical.  Edway computes the
+correlation coefficient between channels, and their average loudnesses.
+Files with coefficients below 0.98, with comparable loudnesses, remain
+stereo, others become mono.  If correlation is higher and loudnesses are
+comparable, mono samples are averaged from the two channels, otherwise the
+dominant channel becomes the mono signal, and the weak channel is ignored.
+It divides sample rate by two only if it equals or exceeds
+32000 samples per second. This cutoff rate and the channel
+parameters can be configured in edway.cfg.
+<p>
+-b , --batch &lt;number&gt;
+<br>
+Controls actions during file conversion. The &lt;number&gt; may be: 1. remove
+silences only; 2. remove silences and smooth privately; 3. remove
+silences and smooth publicly.  Privately means with no attempt to reach
+a public standard, publicly tries to achieve the selected soundlevel.
+Quality is best when privately smoothing, but uniformity among several
+files may demand the public option.
+<p>
+-c , --convert &lt;filename | suffix | filename+suffix&gt;
+<br>
+Runs edway non-interactively to convert files to another format.
+The argument is normally the suffix indicating the format desired, such
+as mp3 or ogg.  However, if only one file is to be converted, the argument
+may also be the desired name of the output file, with or without a suffix.
+See help on writable file formats for a list of suffixes.
+<p>
+-d , --descend
+<br>
+Descend into directories (recurse) when searching for files.  This feature
+is important since edway supports wildcard characters in filenames.
+<p>
+-e , --engine &lt;tts-script&gt;
+<br>
+Execute a user-defined script to convert a text file to audio.  A sample
+script, william, shows how this is done.  The script may be placed in
+/usr/local/bin, and should accept parameters supplied by edway when
+the script is executed.  The first parameter is the name of the file
+to be translated, the second is the name of the wav file that results,
+and the third is the speaking rate to be used.  The script may choose
+to ignore the third parameter if desired.
+<p>
+-f , --flag
+<br>
+Set a quietflag in /var/tmp, and delete it on exit.  This flag may be
+checked by competing user applications to avoid sending audio output
+while edway is running.
+<p>
+ -g, --greeting
+<br>
+Controls the playing of a welcome message when Edway starts up.
+It serves as a quick check of the audio subsystem.
+<p>
+-h , --help
+<br>
+Show a simple help screen and exit.
+<p>
+-l , --level &lt;rms&gt;
+<br>
+Set the 0 dB soundlevel to &lt;rms&gt;, default is 3277.
+<p>
+-n , --newest
+<br>
+Accept only the most recent of a set of input files.
+<p>
+-o , --other &lt;string&gt;
+<br>
+Allows some parameters to be changed even though they do not have
+their own command line option. The argument to this option
+is a "variable=value" assignment, with no spaces. The variables that are
+recognized are:.
+<br>
+bpf , bpf=l,u -- band pass filter, lower and upper cutoffs optional.
+<br>
+hpf , hpf=n -- high pass filter, cutoff frequency n optional.
+<br>
+lpf , lpf=n -- low pass filter, cutoff frequency n optional.
+<br>
+sm=x,n -- smooth parameters, Time and Drop.
+<br>
+sq=x,n -- squeeze parameters, DB and Keep.
+<br>
+vs=x -- variable speed factor, 0.8 <= x <= 1.25
+<p>
+-p , --play
+<br>
+Play a set of audio files.  While playing, pressing space pauses play,
+pressing space again resumes it.  Moving backward and forward is done with
+b (6 seconds back), capital B (60 seconds back), less-than (600 seconds
+back), or with f (six seconds forward), capital F (60 seconds forward),
+or greater-than (600 seconds forward).  If a number of files is being
+played, pressing n moves to the next item in the list, pressing p moves
+to the previous item, and pressing q stops play and exits.  A bookmark is
+saved so that an interrupted file can be resumed where it was interrupted.
+During play, or while paused, pressing the comma reports file position
+in minutes and seconds, pressing period reports it as the percent of
+the file already played.
+<p>
+-q , --quiet
+<br>
+Run with very little or no screen output.
+<p>
+-r , --rate &lt;samplerate&gt;&lt;M | S&gt;
+<br>
+Set the samplerate and optionally the mono/stereo structure of files to be converted.
+Rates are 6000, 8000, 11025, 12000, 16000, 22050, 24000,
+32000, 44100, or 48000 samples per second.
+Shortened equivalents are allowed: 6, 8, 11, 12, 16, 22, 24, 32, 
+41, and 48, respectively.
+<p>
+-t , --timing
+<br>
+Report playing time, sample rate, and channel structure of input files.
+<p>
+-v , --verbose
+<br>
+Run with extra screen output, this option may be repeated.
+<p>
+-V , --version
+<br>
+Report the program version and license information, and exit.
+<p>
+-w , --wpm &lt;rate&gt;
+<br>
+Set the speaking rate (words per minute) to use when converting text
+files to audio.
+<p>
+-x , --deflag
+<br>
+Remove the runflag that prevents two copies of edway from running.
+<p>
+-X , --unlock
+<br>
+Remove the runflag that prevents two copies of edway from running.
+<p>
+-z , --zap &lt;number&gt;
+<br>
+Controls the zapping of files.  The number may be: 1., zap (delete)
+the source file if conversion succeeds; 2., zap (overwrite) the target
+file if it already exists; or 3., both 1 and 2 above.
+<p align=center>
+End of Option List
+</p>
+<p>&nbsp;</p>
+<h3 align=center>
+Appendix X
+<p>&nbsp;</p>
+                     DECIBELS: Measuring Loudness
+</h3>
+
+<p>
+                      Charles Hallenbeck, Ph.D.
+</p>
+
+<p>
+                           November 2002
+</p>
+
+<p>
+We perceive the loudness of sounds on a logarithmic scale. That is,
+equal intervals of loudness are represented by a series of numbers such
+as 1, 2, 4, 8, 16, and so on, rather than 1, 2, 3, 4, 5, etc.
+Successively doubling the energy of a sound increases its apparent
+loudness by equal amounts.
+</p>
+
+<p>
+The "decibel" is the measure of how much louder or softer one sound is
+than another. A sound is said to be so many decibels (or "dB") above or
+below a reference sound. The 'd' in 'dB' is written lower case, while
+the 'B' is written upper case, in honor of Alexander Graham Bell,
+inventor of the telephone.
+</p>
+
+<p>
+The tricky part is that the energy of a sound is given by its power, and
+not by its amplitude. I find it helpful to think of an electrical
+circuit to clarify this point. The power (watts) in a circuit is
+measured by its intensity (volts) multiplied by its rate of flow
+(current), or W = E times I. If you double the voltage flowing in a
+circuit, the current will also double, so that the power dissipated in
+the circuit is actually increased by four. This is an important point.
+</p>
+
+<p>
+When we digitize a sound wave in order to store the resulting series of
+numbers in a file, we are actually digitizing only the amplitude or
+intensity of the sound, and not its energy or power. If one sound has
+twice the amplitude of another, it has four times its energy or power,
+and it is the difference in power that is measured by decibels.
+</p>
+
+<p>
+Logarithms are involved, but they are not as difficult as you might
+think. There are "natural logarithms" and "common logarithms," and it is
+the common ones (using base 10) that are involved in computing decibels.
+The logarithm of one is zero. The logarithm of 10 is one. The logarithm
+of 100 is two. And the logarithm of 1000 is three, etc. The logarithm of
+0.1 is minus one. The logarithm of 0.01 is minus two. And the logarithm
+of 0.001 is minus three, and so on.  Of course all the numbers in
+between have exact logarithms too, but those numbers are more messy.
+There are tables of logarithms (or functions in a software library) to
+help find the logarithm of any positive number.
+</p>
+
+<p>
+To find out how many decibels a given sound is compared to a reference,
+you take the logarithm of the power ratio between the two sounds, and
+multiply by ten. When we digitize a sound wave we have only its
+amplitude, and we have only the amplitude of a reference, and not their
+powers. But we know that their power ratio is the square of their
+amplitude ratio. For example, if one sound has ten times the amplitude
+of another (the reference) then we know that it has 100 times the power.
+Since the logarithm of 100 is two, and ten times two is twenty, we say
+that the sound is 20 dB above its reference, or +20dB. If the sound were
+only one tenth the amplitude of the reference, it would have only one
+hundredth the power. The power ratio would then be 0.01, with a
+logarithm of minus two. Ten times minus two is -20, so that this sound
+would be -20 dB, or 20 dB down.
+</p>
+
+<p>
+There are a few other numbers that are convenient to know by heart. The
+logarithm of two is close to 0.3, and so ten times 0.3, or 3 dB,
+describes a sound whose power is twice that of some reference sound. If
+a sound has only half the power of a reference sound it is said to be -3
+dB or 3 dB down. On the other hand, a sound whose amplitude is twice the
+reference would result in a power ratio of four, since two squared is
+four. The logarithm of four is close to 0.6, and ten times 0.6, or 6 dB,
+would describe that sound. If its amplitude were only half the amplitude
+of the reference it would be -6 dB, or 6 dB down.
+</p>
+
+<p>
+A digitized audio signal generally consists of a sequence of integers
+(no fractions or decimals please) ranging from a maximum of +32767 to a
+minimum of -32768. These are the so-called "signed 16 bit" integers.
+When capturing an audio signal we must take care that the amplitude
+stays within these bounds, or "clipping" will occur. We would like the
+signal to produce numbers as close to the maximum and minimum as
+possible while avoiding the danger of clipping.
+</p>
+
+<p>
+The more samples we can produce per second, the more faithful to the
+original sound wave our digitized equivalent will be. However, the more
+samples per second, the larger our resulting files will be. There is a
+direct tradeoff between file size and fidelity. There is a rule of thumb
+that relates sampling rate to the highest frequency that can be
+represented in a digitized audio signal. That rule of thumb is called
+the "sampling theorem," and it states that the sampling rate is twice
+the highest frequency that can be represented. That highest frequency is
+called the "Niquist frequency." Thus a sampling rate of 16000 samples
+per second would be able to support at most 8000 Hz. sounds, while a
+sampling rate of 44100 samples per second, commonly used for CD quality,
+would support up to 22050 hz. The range of human hearing is 20 to 20000
+Hz, with significant declines in higher frequencies common among older
+persons.
+</p>
+
+<p>
+In order to apply these ideas to a digitized audio signal, we need to
+settle on a reference level against which any given amplitude can be
+compared. We cannot use zero, since it is meaningless to speak of a
+ratio between any amplitude and the value zero. We could use the maximum
+and minimum values, +32767 and -32768, so that all our signals would
+have ratios of less than 1.0 when compared to the reference. That means
+all the decibel values would be negative, with higher amplitude peaks
+approaching, but hopefully never quite reaching, 0 dB. In fact this is
+common practice for many systems, and one often hears the recommendation
+to adjust the audio signal so that its peak values just reach 0 dB and
+thus the entire span of integer values would be fully utilized. 
+</p>
+
+<p>
+There is a problem with this approach. The problem is that audio signals
+are very diverse, ranging from simple sine wave tones to extremely
+complex waves produced by speech, music, or natural sounds. These
+various audio signals have an average loudness with peaks that differ
+dramatically from one type of sound to another. If each of the different
+types of sounds were digitized so that their peaks approached the 0 dB
+level, they would have very different apparent loudnesses. Some would
+seem much fainter than others, and the problem of mixing and matching
+sounds would be severe. In other words, it is not the peak values that
+determine our perceptions of loudness, but the average values of each
+sound source. We need to find a way to standardize those average
+loudnesses instead of standardizing the peaks contained in various sound
+sources.
+</p>
+
+<p>
+Wedit has adopted a measure of loudness and a decibel reference level
+that differ from other audio software. Loudness is measured by computing
+the standard deviation of the sample values over an interval of time.
+"Standard deviation" is a well known concept in statistics and is
+commonly used to measure the dispersion or spread in a set of data.
+Engineers use the term "root mean square" to refer to exactly the same
+concept. Each value is squared, thereby getting rid of minus signs. The
+squares are averaged, and the square root of the average is the number
+we use. Wedit calculates this statistic when it reports loudness.
+</p>
+
+<p>
+In addition, Wedit adopts a reference value of 10% of the range of
+integers, or 3277, so that loudness can be converted to decibels using
+this reference. Thus the 0 dB loudness level in Wedit is not a peak
+amplitude of +32767 or -32768, but a standard deviation over a period of
+time that measures 3277. This is 20 dB below the reference that is used
+when working with peaks. When various audio sources are adjusted to
+produce this 0 dB loudness, they may have peaks that vary considereably,
+but their apparent loudness to the human listener will be very close to
+uniform.
+</p>
+
+<p>
+One exception: If Wedit is asked to adjust the amplitude of an audio
+signal so that its loudness level is 0 dB (a standard deviation of
+3277), it will not do so if the peak values in the signal would exceed
+the maximum and minimum integer values. In those cases the adjusted
+loudness of the signal will fail to reach 0 dB by just enough to prevent
+the clipping that would otherwise occur.
+</p>
+
+<p>
+A final note about those integer limits, +32767 and -32768. If you have
+wondered why the numbers are not the same, the answer is simple. There
+is a match for every positive number among the negative numbers: +1 and
+-1, +2 and -2, +3 and -3, and so on. However, there is only one zero. It
+is neither positive nor negative. What to do? It is commonly regarded as
+almost positive (actually it is called "non-negative"), but that leaves
+an extra member of the set of negative numbers. That is why there is a
+-32768 with no partner on the plus side, and a 0 with no partner on the
+minus side. Is that clever, or what?
+</p>
+
+<p>
+<p>&nbsp;</p>
+</body>
+</html>

@@ -1,0 +1,6 @@
+The label command, l, allows attaching an arbitrary label to a session.
+Type l and press enter to display the current label.  Type l, a space,
+and any arbitrary word or phrase to add or replace a session label.
+Type l, a space, and a dash, to remove a label from a session without
+adding a new one.
+

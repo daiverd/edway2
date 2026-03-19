@@ -1,0 +1,11 @@
+The write command, w, outputs all or part of the data to a file, or
+to another edit session.  To output less than the entire data, type
+a block address, or a comma separated range of blocks, followed by w.
+If you then press enter, Edway writes the data to the default filename
+shown as "target" by the question mark command.  To write to a different
+file, type a space after the w, the desired filename, then press enter.
+To write the data to another edit session instead of to a file, follow
+the w with the number of the session, without an intervening space,
+then press enter. The session will be created if it does not exist.
+Any previous data in the destination session will be overwritten.
+

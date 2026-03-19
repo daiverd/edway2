@@ -1,0 +1,18 @@
+-o , --other <string>
+
+Allows some parameters to be changed even though they do not have their
+own command line option. The argument to this option is a variable, or a "variable=value"
+assignment, with no spaces around the equal sign. The variables that
+are recognized are:.
+
+bpf , bpf=l,u -- band pass filter, lower and upper cutoffs optional.
+hpf , hpf=n -- high pass filter, lower cutoff frequency n optional.
+lpf , lpf=n -- low pass filter, upper cutoff frequency n optional.
+sm=x,n,z -- smooth parameters, Time, Drop, and DB.
+sq=x,n -- squeeze parameters, DB and Keep.
+ek=x -- apply an echo effect, x = delay in milliseconds.
+vs=x -- variable speed factor, 0.8 <= x <= 2.0, or a time value.
+
+a time value must have an M separating minutes and seconds, and may have
+an H separating hours from minutes.
+

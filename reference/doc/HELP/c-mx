@@ -1,0 +1,12 @@
+The mix command, mx, mixes another edit session with the current session.
+An optional block address, or a comma separated pair of addresses,
+precedes the command name to tell where to start adding the new audio. A
+session number must immediately follow the command name to identify
+the session to be added.  If the material being mixed with the current
+session needs fading in, or fading out, the time in seconds is given as
+one or two numbers, space separated.  For example:
+
+3,9mx2 0.5 2.0
+
+Session #2 is mixed with blocks 3 through nine of the current session,
+faded in over 0.5 seconds, and faded out over 2.0 seconds.

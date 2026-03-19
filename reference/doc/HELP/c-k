@@ -1,0 +1,13 @@
+The k command is used to set arbitrary marks in a file, so that
+a reference may be made to the marks later.  This may relieve the
+user from the need to remember specific block numbers while editing.
+You may set up to 26 marks, one for each letter of the alphabet.
+Enter a k, and without spacing, enter a lower case letter, and press
+enter.  Your location in the file is then marked with that letter.
+You may use a reference to that mark whenever you give a block address
+to an edway command.  To reference the mark, you use an apostrophe,
+often called a tick, followed by the letter that you used for the mark.
+It is not actually a block that is marked, but a single millisecond long
+atom of sound in the middle of the block.  Marks are thus preserved when
+block size is modified with the ms command or the nb command.
+

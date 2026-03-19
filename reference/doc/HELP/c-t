@@ -1,0 +1,9 @@
+The transfer command t, lets you copy blocks of audio data, replicating
+them somewhere else within the stream, so that they exist in both
+places: where they were originally, and where you have copied them.
+It needs a block address, or a comma separated pair of them, in front
+of the command, to tell what blocks to transfer, and a single block
+address after it, to tell where to put the copy.  The copied blocks are
+appended to the destination block, unless the destination is block one,
+when it is inserted ahead of it.
+

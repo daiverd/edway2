@@ -1,0 +1,3 @@
+-w , --wpm <rate>
+Set the speaking rate (words per minute)
+to use when converting text files to audio.

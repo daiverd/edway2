@@ -1,0 +1,4 @@
+The commands q and qt are both used to quit, but the two are not
+identical.  The q command quits the current session, while qt quits
+all sessions and exits from the program. If there are no sessions open,
+q and qt both exit from the program.

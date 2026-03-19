@@ -1,0 +1,8 @@
+-r , --rate : Set the samplerate and/or channels to be used for the file
+conversion service.  The mandatory argument is the desired samplerate,
+optionally followed by the letter M or the letter S for mono or stereo.
+Recognized rates are: 6 or 6000, 8 or 8000, 11 or 11025, 12 or 12000,
+16 or 16000, 22 or 22050, 24 or 24000, 32 or 32000, 44 or 44100, and 48
+or 48000.  If only the number of channels is to be specified, and not
+the sample rate, 0 may be given as the rate, followed immediately by M or S.
+

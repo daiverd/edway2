@@ -1,0 +1,5 @@
+Press e and enter to report the number of the current edit session and
+the name of its associated file.  Enter e followed immediately by the
+number of another edit session, e2, e7, etc, and edway changes sessions
+to the one you requested.  It will create it if it does not exist,
+and report the name of an associated file, if any.

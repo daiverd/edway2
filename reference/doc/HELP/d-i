@@ -1,0 +1,7 @@
+-i , --ignore
+Ignore any manual or automatic backup commands while editing a file,
+and ignore any efforts to read or write the Edway history file when
+playing a file.  This feature helps prevent excessive memory usage and
+possible file access collisions with other instances of Edway you may
+be running simultaneously.
+

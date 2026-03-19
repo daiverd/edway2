@@ -1,0 +1,8 @@
+-b , --batch <number>
+Controls actions during file conversion. The <number> may be: 1.
+remove silences only; 2. remove silences and smooth privately; 3.
+remove silences and smooth publicly.
+Privately means with no attempt to reach a public standard,
+publicly tries to achieve the selected soundlevel.
+Quality is best when privately smoothing,
+but uniformity among several files may demand the public option.

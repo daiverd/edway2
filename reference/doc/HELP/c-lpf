@@ -1,0 +1,6 @@
+The low pass filter command, lpf, is part of a group of filter commands
+consisting of bpf, hpf, and lpf.  These commands invoke the sox helper
+program to apply a band pass, a high pass, or a low pass filter,
+respectively, to the audio.  The usual default cutoff frequency is 3000
+Hz, optimized for pitched samples (i.e., voice and music).  Only an
+entire audio can be filtered.

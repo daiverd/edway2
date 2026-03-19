@@ -1,0 +1,7 @@
+Type h and press enter to open the Edway Users Manual with your favorite
+browser.  Be sure the BROWSER environment variable contains your browser's
+name. Type h, a space, and a command name, or a command line option,
+to get help with that command or option.  Type h, a space, and h, to
+get help with the help command.  Type h, a space, and an unrecognized
+entry for still further information.
+

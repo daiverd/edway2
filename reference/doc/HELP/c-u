@@ -1,0 +1,9 @@
+The undo command, u, restores a session from a pair of backup files that
+were created in the configuration directory with the backup command, b.
+Type u to undo, i.e., to restore a saved backup.  Please note: existing
+data in the current edit session will be overwritten.  After a successful
+restore in autosave mode, or on normal program termination, the backup
+files will be deleted.  When autosave is enabled, several commands
+will automatically perform a backup before they execute.  The commands
+protected by autosave are: d, ek, fi, fo, mx, vs, bpf, hpf, and lpf.
+

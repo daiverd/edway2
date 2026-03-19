@@ -1,0 +1,8 @@
+The channel Statistics command, cs, reports data on all or part of a
+stereo file.  The command may be qualified by one or a pair of initial
+addresses to limit the portion of the file to be reported.  The user is
+shown the correlation coefficient between the two channels, and the sound
+level, the maximum excursions in the negative and the positive direction,
+and the value of a possible DC component in the channel.  To report the
+entire file, use one of these equivalent forms: ",cs" or "1,$cs".
+

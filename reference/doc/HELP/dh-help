@@ -1,0 +1,19 @@
+Edway is an interactive text-mode editor for audio files, in the style
+of ed, edbrowse, or the mainframe counterparts: fred, or qed.  To edit
+an audio file, you might type something like this: edway <filename.ext>
+Command line options transform edway into several other non-interactive
+audio tools, as follows:
+
+To convert a file or files into another format:
+edway [options] -c <format> filenames ... | pathnames ...
+
+To play audio files, with pause, navigation, and saving of bookmarks:
+edway [options] -p filenames ... | pathnames ...
+
+
+To report the playing time and several other audio file parameters:
+edway [options] -t filenames ... | pathnames ...
+
+Other command line options are available to fine-tune these actions.
+Extensive online help is available in the edit mode.
+

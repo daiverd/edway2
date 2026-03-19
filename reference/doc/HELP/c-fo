@@ -1,0 +1,7 @@
+The "fade out" command, fo, is used to smoothly decrease the amplitude
+at the end of the audio.  Type fo, a space, and the number of seconds
+over which fading should be done.  The default is 1.0 seconds.  Fading is
+linear when the fading time is more than two seconds, and it is S-shaped,
+or an ogive, when less.  This command may be undone with the undo
+command, u.
+
