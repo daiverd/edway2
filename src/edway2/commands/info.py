@@ -80,12 +80,13 @@ def parse_time_to_ms(arg: str) -> int | None:
 def cmd_info(project: "Project", cmd: Command) -> None:
     """Show session info.
 
-    Displays: project name, session name, track count, duration.
+    Displays: project name, session name, track count, duration, blocks.
     """
     print(f"Project: {project.path.name}")
     print(f"Session: {project.session.timeline.name}")
     print(f"Tracks: {project.session.track_count}")
     print(f"Duration: {project.session.duration:.2f}s")
+    print(f"Blocks: {project.blocks.count} @ {display_time(project.session.block_duration_ms)}")
 
     if project.is_dirty:
         print("(unsaved changes)")
@@ -100,8 +101,37 @@ def cmd_show_position(project: "Project", cmd: Command) -> None:
         .=      - show current block number
         'a=     - show block number of mark a
     """
-    # TODO: Implement with BlockView in Phase 5
-    print("? not implemented yet")
+    blocks = project.blocks
+
+    if cmd.addr1 is None:
+        # No address = show $ (last block)
+        print(blocks.count)
+    elif cmd.addr1.type == "number":
+        # Show the number itself (with offset applied)
+        block = cmd.addr1.value + cmd.addr1.offset
+        print(block)
+    elif cmd.addr1.type == "dot":
+        # Current position
+        block = blocks.from_time(project.session.current_position)
+        block += cmd.addr1.offset
+        print(block)
+    elif cmd.addr1.type == "dollar":
+        # Last block
+        block = blocks.count + cmd.addr1.offset
+        print(block)
+    elif cmd.addr1.type == "mark":
+        # Mark position
+        mark_name = cmd.addr1.value
+        if mark_name not in project.session.marks:
+            print(f"? mark not set: {mark_name}")
+            return
+        mark_time = project.session.marks[mark_name]
+        block = blocks.from_time(mark_time) + cmd.addr1.offset
+        print(block)
+    elif cmd.addr1.type == "time":
+        # Time address
+        block = blocks.from_time(cmd.addr1.value) + cmd.addr1.offset
+        print(block)
 
 
 @command("sr")
@@ -151,15 +181,25 @@ def cmd_nb(project: "Project", cmd: Command) -> None:
         nb        - show current block count
         nb 100    - adjust block duration to get 100 blocks
     """
-    # TODO: Implement with BlockView in Phase 5
     if cmd.arg:
-        print("? nb set not implemented yet")
+        try:
+            target_count = int(cmd.arg)
+            if target_count <= 0:
+                print("? block count must be positive")
+                return
+            duration = project.session.duration
+            if duration <= 0:
+                print("? no audio in session")
+                return
+            # Calculate block duration to achieve target count
+            # block_ms = (duration * 1000) / count
+            new_ms = int((duration * 1000) / target_count)
+            if new_ms <= 0:
+                new_ms = 1  # minimum 1ms
+            project.session.block_duration_ms = new_ms
+            project.mark_dirty()
+            print(f"blocks: {project.blocks.count} @ {display_time(new_ms)}")
+        except ValueError:
+            print(f"? invalid number: {cmd.arg}")
     else:
-        # Show current count (rough calculation)
-        duration = project.session.duration
-        block_ms = project.session.block_duration_ms
-        if duration > 0:
-            count = int(duration * 1000 / block_ms) + 1
-            print(f"blocks: {count}")
-        else:
-            print("blocks: 0")
+        print(f"blocks: {project.blocks.count}")

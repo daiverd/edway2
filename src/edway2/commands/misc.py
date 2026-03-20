@@ -12,14 +12,24 @@ edway2 - non-destructive multitrack audio editor
 
 Ready to test:
   r <file>      Read audio file into current track
-  ?             Show session info (duration, tracks)
-  ms [N]        Show/set block duration in ms
+  ?             Show session info (duration, tracks, blocks)
+  =             Show last block number (or [addr]= for any address)
+  ms [N]        Show/set block duration (500, 0.5, 0:00.500)
+  nb [N]        Show/set number of blocks
   save [msg]    Save session (commits to git)
   !<cmd>        Run shell command
   l [text]      Show/set session label
   h             Show this help
   q             Quit (prompts if unsaved)
   q!            Force quit
+
+Addresses (for use with =):
+  5             Block number
+  .             Current position
+  $             Last block
+  'a            Mark a
+  @1:30         Time (1 min 30 sec)
+  $-3           Offset (3 blocks before end)
 
 Not yet implemented:
   p, z          Playback (Phase 6)

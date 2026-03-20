@@ -6,6 +6,7 @@ from pathlib import Path
 import git
 
 from edway2.session import Session
+from edway2.blocks import BlockView
 
 
 @dataclass
@@ -217,3 +218,11 @@ class Project:
     def session_file(self) -> Path:
         """Path to session .edway file."""
         return self.path / f"{self.path.name}.edway"
+
+    @property
+    def blocks(self) -> BlockView:
+        """Get block view for current session."""
+        return BlockView(
+            duration_seconds=self.session.duration,
+            block_duration_ms=self.session.block_duration_ms,
+        )
