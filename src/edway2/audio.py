@@ -142,6 +142,59 @@ def play_audio(data: np.ndarray, sample_rate: int, blocking: bool = True) -> Non
         sd.wait()
 
 
+def play_until_keypress(data: np.ndarray, sample_rate: int) -> bool:
+    """Play audio, stopping on any keypress.
+
+    Args:
+        data: Audio samples as numpy array (frames, channels).
+        sample_rate: Sample rate in Hz.
+
+    Returns:
+        True if stopped by keypress, False if played to completion.
+    """
+    import sys
+    import select
+    import tty
+    import termios
+
+    sd = _get_sounddevice()
+
+    # Save terminal settings
+    old_settings = None
+    try:
+        old_settings = termios.tcgetattr(sys.stdin)
+    except termios.error:
+        # Not a terminal, fall back to blocking play
+        sd.play(data, sample_rate)
+        sd.wait()
+        return False
+
+    try:
+        # Set terminal to raw mode (no buffering, no echo)
+        tty.setraw(sys.stdin.fileno())
+
+        # Start non-blocking playback
+        sd.play(data, sample_rate)
+
+        # Poll for keypress while audio plays
+        stopped = False
+        while sd.get_stream() and sd.get_stream().active:
+            # Check for keypress with 50ms timeout
+            ready, _, _ = select.select([sys.stdin], [], [], 0.05)
+            if ready:
+                sys.stdin.read(1)  # consume the key
+                sd.stop()
+                stopped = True
+                break
+
+        return stopped
+
+    finally:
+        # Restore terminal settings
+        if old_settings:
+            termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
+
+
 def stop_playback() -> None:
     """Stop any currently playing audio."""
     sd = _get_sounddevice()

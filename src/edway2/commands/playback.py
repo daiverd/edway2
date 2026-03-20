@@ -6,7 +6,7 @@ import numpy as np
 
 from edway2.commands import command
 from edway2.parser import Command, Address
-from edway2.audio import load_audio, play_audio, stop_playback
+from edway2.audio import load_audio, play_until_keypress, stop_playback
 from edway2.errors import AudioError
 
 if True:  # TYPE_CHECKING workaround
@@ -159,7 +159,9 @@ def cmd_play(project: "Project", cmd: Command) -> None:
     try:
         start, end = get_playback_range(project, cmd)
         data, sr = render_timeline(project, start, end)
-        play_audio(data, sr, blocking=True)
+        stopped = play_until_keypress(data, sr)
+        if stopped:
+            print("(stopped)")
     except AudioError as e:
         print(f"? {e}")
     except Exception as e:
@@ -205,7 +207,9 @@ def cmd_play_seconds(project: "Project", cmd: Command) -> None:
 
     try:
         data, sr = render_timeline(project, start, end)
-        play_audio(data, sr, blocking=True)
+        stopped = play_until_keypress(data, sr)
+        if stopped:
+            print("(stopped)")
     except AudioError as e:
         print(f"? {e}")
     except Exception as e:
