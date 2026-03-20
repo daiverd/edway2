@@ -1,6 +1,7 @@
 """Info commands: ?, =, sr, nc, ms, nb."""
 
 import re
+from math import ceil
 
 from edway2.commands import command
 from edway2.parser import Command
@@ -192,8 +193,8 @@ def cmd_nb(project: "Project", cmd: Command) -> None:
                 print("? no audio in session")
                 return
             # Calculate block duration to achieve target count
-            # block_ms = (duration * 1000) / count
-            new_ms = int((duration * 1000) / target_count)
+            # Use ceil to ensure blocks are long enough (avoid extra block from rounding)
+            new_ms = ceil((duration * 1000) / target_count)
             if new_ms <= 0:
                 new_ms = 1  # minimum 1ms
             project.session.block_duration_ms = new_ms
