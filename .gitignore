@@ -46,3 +46,6 @@ Thumbs.db
 *.edway
 sources/
 renders/
+
+# Test audio files (binary, not tracked)
+tests/test_files/

@@ -166,6 +166,28 @@ class Project:
         except git.GitCommandError:
             return False
 
+    def execute(self, line: str) -> None:
+        """Parse and execute a command line.
+
+        Args:
+            line: Command line to execute.
+        """
+        from edway2.parser import parse
+        from edway2.errors import ParseError
+        from edway2 import commands
+
+        line = line.strip()
+        if not line:
+            return
+
+        try:
+            cmd = parse(line)
+            commands.execute(self, cmd)
+        except ParseError as e:
+            print(f"? syntax error: {e}")
+        except ValueError as e:
+            print(f"? {e}")
+
     def resolve_path(self, filepath: Path) -> str:
         """Return relative path if inside project, absolute otherwise.
 

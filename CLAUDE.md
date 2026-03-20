@@ -64,12 +64,21 @@ edway2/
 
 ## Implementation Phases
 
-See SPEC.md for detailed phases. Currently working on: **Phase 1 (REPL Shell)**.
+See SPEC.md for detailed phases. Currently working on: **Phase 4 (Read Audio File)**.
 
 Each phase has:
 - Specific files to create
 - Test code to write first
 - "Done when" acceptance criterion
+
+## Test Files
+
+Real audio files for manual testing are in `tests/test_files/`:
+- `airf.mp3` - MP3 test file
+- `Count.wav` - WAV test file
+- `Chislehurst Caves/*.wav` - Multiple WAV files
+
+**Important**: Do not modify these files directly. Copy them to a test project folder for testing.
 
 ## Reference Code
 

@@ -1,6 +1,7 @@
 """Tests for edway2 REPL."""
 
 import pytest
+from pathlib import Path
 
 from edway2.repl import run_repl
 
@@ -48,20 +49,22 @@ def test_eof_exits(mock_prompt):
     assert result == 0
 
 
-def test_unknown_command_returns_error(mock_prompt, capsys):
+def test_unknown_command_returns_error(mock_prompt, capsys, tmp_path):
     """Test unknown command prints error message."""
     mock_prompt(["xyz", "q"])
-    run_repl(None)
+    run_repl(str(tmp_path / "test_project"))
     captured = capsys.readouterr()
-    assert "? unknown command: xyz" in captured.out
+    # Parser can't match "xyz" to any command
+    assert "? syntax error" in captured.out
 
 
-def test_unknown_command_with_args(mock_prompt, capsys):
-    """Test unknown command with arguments shows just the command."""
-    mock_prompt(["foo bar baz", "q"])
-    run_repl(None)
+def test_unimplemented_command_returns_error(mock_prompt, capsys, tmp_path):
+    """Test unimplemented command shows error."""
+    # "fo" is fade out - recognized by parser but not yet implemented
+    mock_prompt(["fo", "q"])
+    run_repl(str(tmp_path / "test_project"))
     captured = capsys.readouterr()
-    assert "? unknown command: foo" in captured.out
+    assert "? unknown command: fo" in captured.out
 
 
 def test_empty_line_does_nothing(mock_prompt, capsys):
@@ -71,3 +74,11 @@ def test_empty_line_does_nothing(mock_prompt, capsys):
     assert result == 0
     captured = capsys.readouterr()
     assert "? unknown command" not in captured.out
+
+
+def test_no_project_shows_message(mock_prompt, capsys):
+    """Test commands without project show appropriate message."""
+    mock_prompt(["r test.wav", "q"])
+    run_repl(None)
+    captured = capsys.readouterr()
+    assert "? no project open" in captured.out

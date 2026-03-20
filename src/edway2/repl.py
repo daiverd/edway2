@@ -60,44 +60,25 @@ def run_repl(project_path: str | None) -> int:
         if not line:
             continue
 
-        # Parse command (simple split for now)
-        parts = line.split(maxsplit=1)
-        cmd = parts[0]
-        arg = parts[1] if len(parts) > 1 else None
-
-        # Handle quit commands
-        if cmd == "q" or cmd == "qt":
+        # Handle quit commands directly (need special processing)
+        if line in ("q", "qt"):
             if project and project.is_dirty:
                 print("? unsaved changes (use 'save' or 'q!' to force)")
                 continue
             break
 
-        if cmd == "q!":
+        if line == "q!":
             # Force quit without saving
             break
 
-        # Handle save command
-        if cmd == "save":
-            if project:
-                message = arg if arg else "save"
-                project.save(message)
-                print(f"Saved: {project.session_file.name}")
+        # All other commands go through the dispatcher
+        if project:
+            project.execute(line)
+        else:
+            # No project open - only some commands work
+            if line.startswith("h"):
+                print("? help not implemented yet")
             else:
                 print("? no project open")
-            continue
-
-        # Handle info command
-        if cmd == "?":
-            if project:
-                print(f"Project: {project.path.name}")
-                print(f"Session: {project.session.timeline.name}")
-                print(f"Tracks: {project.session.track_count}")
-                print(f"Duration: {project.session.duration:.2f}s")
-            else:
-                print("? no project open")
-            continue
-
-        # Unknown command
-        print(f"? unknown command: {cmd}")
 
     return 0
