@@ -15,18 +15,19 @@ edway2 is a non-destructive multitrack audio editor with a line-editor (ed/vim s
 ## Commands
 
 ```bash
-# Install in development mode
-pip install -e ".[dev]"
+# Add dependencies
+uv add <package>
+uv add --dev <package>
 
 # Run tests
-pytest
+uv run pytest
 
 # Run single test
-pytest tests/test_parser.py::test_parse_simple -v
+uv run pytest tests/test_parser.py::test_parse_simple -v
 
 # Run the application
-edway2
-edway2 --version
+uv run edway2
+uv run edway2 --version
 ```
 
 ## Project Structure
@@ -63,7 +64,7 @@ edway2/
 
 ## Implementation Phases
 
-See SPEC.md for detailed phases. Currently working on: **Phase 0 (Skeleton)**.
+See SPEC.md for detailed phases. Currently working on: **Phase 1 (REPL Shell)**.
 
 Each phase has:
 - Specific files to create
