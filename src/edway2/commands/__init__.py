@@ -62,3 +62,5 @@ def execute(project: "Project", cmd: "Command") -> None:
 # Import command modules to register handlers
 from edway2.commands import files  # noqa: E402, F401
 from edway2.commands import info  # noqa: E402, F401
+from edway2.commands import misc  # noqa: E402, F401
+from edway2.commands import playback  # noqa: E402, F401
