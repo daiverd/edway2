@@ -60,7 +60,6 @@ def main(argv: list[str] | None = None) -> int:
         print("Convert mode not yet implemented")
         return 1
 
-    # Interactive mode (to be implemented)
-    print(f"edway2 {__version__}")
-    print("Interactive mode not yet implemented")
-    return 0
+    # Interactive mode
+    from edway2.repl import run_repl
+    return run_repl(args.path)

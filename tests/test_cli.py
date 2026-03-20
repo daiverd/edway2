@@ -22,12 +22,13 @@ def test_version_value():
     assert __version__ == "0.1.0"
 
 
-def test_main_no_args(capsys):
-    """Test running with no arguments."""
+def test_main_no_args(mocker):
+    """Test running with no arguments starts REPL."""
+    # Mock the REPL to avoid interactive prompt
+    mock_repl = mocker.patch("edway2.repl.run_repl", return_value=0)
     result = main([])
     assert result == 0
-    captured = capsys.readouterr()
-    assert "edway2" in captured.out
+    mock_repl.assert_called_once_with(None)
 
 
 def test_play_not_implemented(capsys):
