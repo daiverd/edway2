@@ -58,6 +58,9 @@ def get_playback_range(project: "Project", cmd: Command) -> tuple[float, float]:
 
     Returns:
         Tuple of (start_time, end_time) in seconds.
+
+    Raises:
+        ValueError: If block addresses are out of range.
     """
     blocks = project.blocks
 
@@ -65,20 +68,21 @@ def get_playback_range(project: "Project", cmd: Command) -> tuple[float, float]:
         # No addresses: play current block
         current_block = blocks.from_time(project.session.current_position)
         current_block = blocks.clamp(current_block)
+        blocks.validate(current_block)
         start = blocks.to_time(current_block)
         end = blocks.to_time_end(current_block)
     elif cmd.addr2 is None:
         # Single address: play that block
         block = resolve_address(project, cmd.addr1, 1)
-        block = blocks.clamp(block)
+        blocks.validate(block)
         start = blocks.to_time(block)
         end = blocks.to_time_end(block)
     else:
         # Range: play from addr1 to addr2
         block1 = resolve_address(project, cmd.addr1, 1)
         block2 = resolve_address(project, cmd.addr2, blocks.count)
-        block1 = blocks.clamp(block1)
-        block2 = blocks.clamp(block2)
+        blocks.validate(block1)
+        blocks.validate(block2)
         if block1 > block2:
             block1, block2 = block2, block1
         start = blocks.to_time(block1)
@@ -162,6 +166,8 @@ def cmd_play(project: "Project", cmd: Command) -> None:
         stopped = play_until_keypress(data, sr)
         if stopped:
             print("(stopped)")
+    except ValueError as e:
+        print(f"? {e}")
     except AudioError as e:
         print(f"? {e}")
     except Exception as e:

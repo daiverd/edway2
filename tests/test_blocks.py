@@ -138,3 +138,40 @@ class TestClamp:
         """Empty timeline clamps to 1."""
         bv = BlockView(duration_seconds=0.0, block_duration_ms=1000)
         assert bv.clamp(5) == 1
+
+
+class TestValidate:
+    """Tests for validating block numbers."""
+
+    def test_validate_valid_block(self):
+        """Valid block does not raise."""
+        bv = BlockView(duration_seconds=10.0, block_duration_ms=1000)
+        bv.validate(1)  # first
+        bv.validate(5)  # middle
+        bv.validate(10)  # last
+
+    def test_validate_block_zero_raises(self):
+        """Block 0 raises ValueError."""
+        bv = BlockView(duration_seconds=10.0, block_duration_ms=1000)
+        with pytest.raises(ValueError, match="block must be >= 1"):
+            bv.validate(0)
+
+    def test_validate_negative_block_raises(self):
+        """Negative block raises ValueError."""
+        bv = BlockView(duration_seconds=10.0, block_duration_ms=1000)
+        with pytest.raises(ValueError, match="block must be >= 1"):
+            bv.validate(-5)
+
+    def test_validate_block_past_end_raises(self):
+        """Block past end raises ValueError."""
+        bv = BlockView(duration_seconds=10.0, block_duration_ms=1000)
+        with pytest.raises(ValueError, match="block 11 out of range"):
+            bv.validate(11)
+        with pytest.raises(ValueError, match="block 100 out of range"):
+            bv.validate(100)
+
+    def test_validate_empty_timeline_raises(self):
+        """Any block on empty timeline raises ValueError."""
+        bv = BlockView(duration_seconds=0.0, block_duration_ms=1000)
+        with pytest.raises(ValueError, match="no blocks in timeline"):
+            bv.validate(1)

@@ -57,6 +57,13 @@ class TestPlayCommand:
         output = capsys.readouterr().out
         assert "(stopped)" in output
 
+    def test_play_out_of_range_shows_error(self, tmp_project, sample_wav, capsys):
+        """Test playing block past end shows error."""
+        tmp_project.execute(f"r {sample_wav}")  # 1 second = 1 block at 1000ms
+        tmp_project.execute("100p")  # way past end
+        output = capsys.readouterr().out
+        assert "? block 100 out of range" in output
+
 
 class TestPlaySecondsCommand:
     """Tests for the z (play seconds) command."""

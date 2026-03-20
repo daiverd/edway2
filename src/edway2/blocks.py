@@ -93,3 +93,19 @@ class BlockView:
         if self.count == 0:
             return 1
         return max(1, min(block, self.count))
+
+    def validate(self, block: int) -> None:
+        """Validate block number is in range [1, count].
+
+        Args:
+            block: Block number to validate.
+
+        Raises:
+            ValueError: If block is out of range.
+        """
+        if block < 1:
+            raise ValueError(f"block must be >= 1, got {block}")
+        if self.count > 0 and block > self.count:
+            raise ValueError(f"block {block} out of range (1-{self.count})")
+        if self.count == 0:
+            raise ValueError("no blocks in timeline")
