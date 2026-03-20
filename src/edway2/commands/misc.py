@@ -12,6 +12,8 @@ edway2 - non-destructive multitrack audio editor
 
 Ready to test:
   r <file>      Read audio file into current track
+  p             Play current block (or [range]p for range)
+  z [N]         Play N seconds from current (default 5)
   ?             Show session info (duration, tracks, blocks)
   =             Show last block number (or [addr]= for any address)
   ms [N]        Show/set block duration (500, 0.5, 0:00.500)
@@ -23,7 +25,7 @@ Ready to test:
   q             Quit (prompts if unsaved)
   q!            Force quit
 
-Addresses (for use with =):
+Addresses:
   5             Block number
   .             Current position
   $             Last block
@@ -32,7 +34,7 @@ Addresses (for use with =):
   $-3           Offset (3 blocks before end)
 
 Not yet implemented:
-  p, z          Playback (Phase 6)
+  u, U          Undo/Redo (Phase 7)
   d, m, t       Editing (Phase 8)
   rd, rm, rt    Ripple editing (Phase 9)
   k, region     Marks (Phase 10)

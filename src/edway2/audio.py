@@ -3,10 +3,23 @@
 from pathlib import Path
 import shutil
 
+import numpy as np
 import soundfile as sf
 from pedalboard.io import AudioFile
 
 from edway2.errors import FileError, AudioError
+
+# Lazy import sounddevice to avoid PortAudio dependency at import time
+_sd = None
+
+
+def _get_sounddevice():
+    """Lazy load sounddevice module."""
+    global _sd
+    if _sd is None:
+        import sounddevice
+        _sd = sounddevice
+    return _sd
 
 
 def read_audio_info(path: Path) -> dict:
@@ -75,3 +88,61 @@ def copy_to_sources(src_path: Path, sources_dir: Path) -> Path:
 
     shutil.copy2(src_path, dest_path)
     return dest_path
+
+
+def load_audio(path: Path, start_frame: int = 0, num_frames: int = -1) -> tuple[np.ndarray, int]:
+    """Load audio samples from file.
+
+    Args:
+        path: Path to audio file.
+        start_frame: Frame to start reading from.
+        num_frames: Number of frames to read (-1 for all).
+
+    Returns:
+        Tuple of (audio_data as numpy array, sample_rate).
+
+    Raises:
+        FileError: If file not found.
+        AudioError: If file cannot be read.
+    """
+    if not path.exists():
+        raise FileError(f"file not found: {path}")
+
+    try:
+        # Try soundfile first
+        data, sr = sf.read(str(path), start=start_frame, frames=num_frames if num_frames > 0 else None)
+        return data.astype(np.float32), sr
+    except Exception:
+        pass
+
+    try:
+        # Try pedalboard for MP3
+        with AudioFile(str(path)) as f:
+            if start_frame > 0:
+                f.seek(start_frame)
+            frames_to_read = num_frames if num_frames > 0 else f.frames - start_frame
+            data = f.read(frames_to_read)
+            # pedalboard returns (channels, frames), transpose to (frames, channels)
+            return data.T.astype(np.float32), f.samplerate
+    except Exception as e:
+        raise AudioError(f"cannot load audio: {path} ({e})")
+
+
+def play_audio(data: np.ndarray, sample_rate: int, blocking: bool = True) -> None:
+    """Play audio data through the default output device.
+
+    Args:
+        data: Audio samples as numpy array (frames, channels).
+        sample_rate: Sample rate in Hz.
+        blocking: If True, wait for playback to complete.
+    """
+    sd = _get_sounddevice()
+    sd.play(data, sample_rate)
+    if blocking:
+        sd.wait()
+
+
+def stop_playback() -> None:
+    """Stop any currently playing audio."""
+    sd = _get_sounddevice()
+    sd.stop()
