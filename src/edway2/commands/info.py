@@ -10,28 +10,26 @@ if True:  # TYPE_CHECKING workaround for circular import
 
 
 def display_time(ms: int) -> str:
-    """Format milliseconds as human-readable time.
+    """Format milliseconds as human-readable time (MM:SS.mmm).
 
     Args:
         ms: Milliseconds.
 
     Returns:
-        Formatted string:
-        - Under 60s: seconds with decimals (e.g., "0.5", "30.25")
-        - 60s+: mm:ss.ss format (e.g., "1:00.00", "2:30.50")
+        Formatted string with millisecond precision:
+        - Under 60s: "SS.mmm" (e.g., "0.001", "30.500")
+        - 60s+: "M:SS.mmm" (e.g., "1:00.000", "2:30.500")
+
+    This matches the precision used by most DAWs (Pro Tools, Ardour, etc.)
     """
     total_seconds = ms / 1000
+    minutes = int(total_seconds // 60)
+    seconds = total_seconds % 60
 
-    if total_seconds < 60:
-        # Show as seconds, strip trailing zeros
-        if ms % 1000 == 0:
-            return f"{int(total_seconds)}"
-        else:
-            return f"{total_seconds:.2f}".rstrip("0").rstrip(".")
+    if minutes == 0:
+        return f"{seconds:.3f}"
     else:
-        minutes = int(total_seconds // 60)
-        seconds = total_seconds % 60
-        return f"{minutes}:{seconds:05.2f}"
+        return f"{minutes}:{seconds:06.3f}"
 
 
 def parse_time_to_ms(arg: str) -> int | None:
