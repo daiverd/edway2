@@ -4,6 +4,8 @@ from prompt_toolkit import PromptSession
 from prompt_toolkit.history import FileHistory
 from pathlib import Path
 
+from edway2 import __version__
+
 
 def get_history_path() -> Path:
     """Get path to command history file."""
@@ -21,6 +23,9 @@ def run_repl(project_path: str | None) -> int:
     Returns:
         Exit code (0 for success).
     """
+    print(f"edway2 {__version__}")
+    print("Type 'h' for help, 'q' to quit.")
+
     session = PromptSession(
         history=FileHistory(str(get_history_path())),
     )
