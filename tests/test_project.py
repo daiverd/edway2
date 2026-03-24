@@ -22,7 +22,7 @@ def test_create_project_has_session(tmp_path):
     """Test created project has a session."""
     proj = Project.create(tmp_path / "test")
     assert proj.session is not None
-    assert proj.session.timeline.name == "test"
+    assert proj.session.name == "test"
 
 
 def test_create_project_has_git_repo(tmp_path):
@@ -49,7 +49,7 @@ def test_open_project(tmp_path):
     # Open it
     proj = Project.open(tmp_path / "myproject")
     assert proj.path == tmp_path / "myproject"
-    assert proj.session.timeline.name == "myproject"
+    assert proj.session.name == "myproject"
 
 
 def test_open_nonexistent_raises(tmp_path):
@@ -64,6 +64,7 @@ def test_save_creates_commit(tmp_path):
     initial_commits = len(list(proj.repo.iter_commits()))
 
     proj.session.marks["a"] = 5.0
+    proj.mark_dirty("added mark a")  # Must mark dirty for save to commit
     proj.save("added mark a")
 
     commits = list(proj.repo.iter_commits())
@@ -76,6 +77,7 @@ def test_save_and_load_preserves_session(tmp_path):
     proj = Project.create(tmp_path / "test")
     proj.session.marks["a"] = 5.0
     proj.session.current_position = 10.0
+    proj.mark_dirty("edit")  # Must mark dirty for save to commit
     proj.save()
 
     proj2 = Project.open(tmp_path / "test")
@@ -88,7 +90,7 @@ def test_dirty_flag(tmp_path):
     proj = Project.create(tmp_path / "test")
     assert not proj.is_dirty
 
-    proj.mark_dirty()
+    proj.mark_dirty("test edit")
     assert proj.is_dirty
 
     proj.save()
@@ -135,14 +137,17 @@ def test_undo(tmp_path):
 
     # Make a change and save
     proj.session.marks["a"] = 5.0
+    proj.mark_dirty("added mark")
     proj.save("added mark")
 
     # Make another change and save
     proj.session.marks["b"] = 10.0
+    proj.mark_dirty("added another mark")
     proj.save("added another mark")
 
-    # Undo
-    assert proj.undo()
+    # Undo - now returns (success, message) tuple
+    success, msg = proj.undo()
+    assert success
     assert "a" in proj.session.marks
     # Note: undo uses git checkout which affects the file,
     # but doesn't remove commits. The session is reloaded.
@@ -152,4 +157,6 @@ def test_undo_at_initial_fails(tmp_path):
     """Test undo at initial commit returns False."""
     proj = Project.create(tmp_path / "test")
     # At initial commit, can't undo further
-    assert not proj.undo()
+    success, msg = proj.undo()
+    assert not success
+    assert "oldest" in msg

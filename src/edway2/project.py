@@ -17,6 +17,8 @@ class Project:
     session: Session
     repo: git.Repo
     _dirty: bool = False
+    _undo_offset: int = 0  # 0 = at HEAD, N = viewing HEAD~N
+    _dirty_reason: str = ""  # description of what made us dirty
 
     @classmethod
     def create(cls, path: Path) -> "Project":
@@ -49,8 +51,13 @@ class Project:
         repo = git.Repo.init(path)
 
         # Create .gitignore
+        # Sources and renders are immutable, only track .edway file
         gitignore = path / ".gitignore"
         gitignore.write_text(
+            "# Audio files (immutable, not tracked)\n"
+            "sources/\n"
+            "renders/\n"
+            "\n"
             "# Temporary files\n"
             "*.tmp\n"
             "*~\n"
@@ -106,12 +113,19 @@ class Project:
 
         return cls(path=path, session=session, repo=repo, _dirty=False)
 
-    def save(self, message: str = "edit") -> None:
-        """Save session and commit.
+    def save(self, message: str = "save", tag: str | None = None) -> None:
+        """Save session and commit. Optionally create a tag.
 
         Args:
             message: Commit message.
+            tag: Optional tag name for this save point.
         """
+        if not self._dirty:
+            # Nothing to save, but maybe create tag
+            if tag:
+                self._create_tag(tag)
+            return
+
         # Save session file
         self.session.to_file(self.session_file)
 
@@ -120,52 +134,166 @@ class Project:
         self.repo.index.commit(message)
 
         self._dirty = False
+        self._dirty_reason = ""
 
-    def mark_dirty(self) -> None:
-        """Mark project as having unsaved changes."""
+        # Create tag if requested
+        if tag:
+            self._create_tag(tag)
+
+    def _create_tag(self, name: str) -> str:
+        """Create a git tag, auto-suffixing if name exists.
+
+        Args:
+            name: Desired tag name.
+
+        Returns:
+            Actual tag name used (may have suffix).
+        """
+        existing_tags = {t.name for t in self.repo.tags}
+
+        if name not in existing_tags:
+            self.repo.create_tag(name)
+            return name
+
+        # Find next available suffix
+        n = 2
+        while f"{name}_{n}" in existing_tags:
+            n += 1
+        actual_name = f"{name}_{n}"
+        self.repo.create_tag(actual_name)
+        return actual_name
+
+    def commit_if_dirty(self, message: str) -> None:
+        """Commit pending changes before next edit.
+
+        Args:
+            message: Commit message for the pending changes.
+        """
+        if self._dirty:
+            self.save(message)
+
+    def mark_dirty(self, reason: str = "edit") -> None:
+        """Mark project as having unsaved changes.
+
+        Args:
+            reason: Description of the change (used as commit message later).
+        """
         self._dirty = True
+        self._dirty_reason = reason
 
     @property
     def is_dirty(self) -> bool:
         """Check if project has unsaved changes."""
         return self._dirty
 
-    def undo(self) -> bool:
-        """Undo last edit (git checkout HEAD~1).
+    def undo(self, force: bool = False) -> tuple[bool, str]:
+        """Navigate to previous commit.
+
+        Args:
+            force: If True, discard uncommitted changes (u!).
 
         Returns:
-            True if undo succeeded, False if at initial commit.
+            Tuple of (success, message).
         """
-        try:
-            # Check if we have a parent commit
-            if not self.repo.head.commit.parents:
-                return False
+        if self._dirty and not force:
+            return False, "unsaved changes (use u! to discard)"
 
-            # Reset to previous commit
-            self.repo.git.checkout("HEAD~1", "--", self.session_file.name)
-
-            # Reload session
-            self.session = Session.from_file(self.session_file)
+        if self._dirty and force:
+            # Discard changes by reloading from current commit
+            self._checkout_offset(self._undo_offset)
             self._dirty = False
-            return True
-        except git.GitCommandError:
-            return False
+            # Don't increment offset - just discard
+            return True, "changes discarded"
 
-    def redo(self) -> bool:
-        """Redo last undone edit.
+        # Count available commits
+        commits = list(self.repo.iter_commits())
+        max_offset = len(commits) - 1  # Can't go past initial commit
+
+        if self._undo_offset >= max_offset:
+            return False, "already at oldest"
+
+        # Navigate back
+        self._undo_offset += 1
+        self._checkout_offset(self._undo_offset)
+        return True, f"viewing {self._undo_offset} back"
+
+    def redo(self) -> tuple[bool, str]:
+        """Navigate forward in history.
 
         Returns:
-            True if redo succeeded, False if nothing to redo.
+            Tuple of (success, message).
         """
-        # Git doesn't have native redo - this is a simplified implementation
-        # A full implementation would track the reflog
-        try:
-            self.repo.git.checkout("HEAD@{1}", "--", self.session_file.name)
-            self.session = Session.from_file(self.session_file)
+        if self._undo_offset == 0:
+            return False, "already at latest"
+
+        self._undo_offset -= 1
+        self._checkout_offset(self._undo_offset)
+        return True, "forward" if self._undo_offset > 0 else "at latest"
+
+    def _checkout_offset(self, offset: int) -> None:
+        """Checkout the .edway file at HEAD~offset and reload session.
+
+        Args:
+            offset: Number of commits back from HEAD.
+        """
+        if offset == 0:
+            ref = "HEAD"
+        else:
+            ref = f"HEAD~{offset}"
+
+        self.repo.git.checkout(ref, "--", self.session_file.name)
+        self.session = Session.from_file(self.session_file)
+
+    def prepare_edit(self) -> None:
+        """Prepare for an edit: commit if dirty, handle undo state.
+
+        Call this before any command that modifies the session.
+        Uses the stored dirty reason as the commit message.
+        """
+        if self._undo_offset > 0:
+            # We're viewing history and about to edit - create revert commit
+            # The file already has the old content, just commit it
+            self.session.to_file(self.session_file)
+            self.repo.index.add([self.session_file.name])
+            self.repo.index.commit(f"revert to {self._undo_offset} back")
+            self._undo_offset = 0
             self._dirty = False
-            return True
-        except git.GitCommandError:
-            return False
+            self._dirty_reason = ""
+        elif self._dirty:
+            # Commit previous changes first
+            self.save(message=self._dirty_reason)
+
+    def history(self) -> list[dict]:
+        """Return list of commits with metadata.
+
+        Returns:
+            List of dicts with: number, message, tags, is_current.
+            Ordered oldest first (number 1 = first commit).
+        """
+        commits = list(self.repo.iter_commits())
+        commits.reverse()  # Oldest first
+
+        # Build tag lookup
+        tag_lookup: dict[str, list[str]] = {}
+        for tag in self.repo.tags:
+            sha = tag.commit.hexsha
+            if sha not in tag_lookup:
+                tag_lookup[sha] = []
+            tag_lookup[sha].append(tag.name)
+
+        # Current position
+        current_idx = len(commits) - 1 - self._undo_offset
+
+        result = []
+        for i, commit in enumerate(commits):
+            result.append({
+                "number": i + 1,
+                "message": commit.message.strip(),
+                "tags": tag_lookup.get(commit.hexsha, []),
+                "is_current": i == current_idx,
+            })
+
+        return result
 
     def execute(self, line: str) -> None:
         """Parse and execute a command line.
@@ -221,7 +349,11 @@ class Project:
 
     @property
     def blocks(self) -> BlockView:
-        """Get block view for current session."""
+        """Get block view for current session.
+
+        Blocks map to timeline positions including gaps. Gaps are just
+        silent blocks - the user doesn't need to know the difference.
+        """
         return BlockView(
             duration_seconds=self.session.duration,
             block_duration_ms=self.session.block_duration_ms,
