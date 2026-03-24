@@ -19,11 +19,11 @@ from conftest_hypothesis import (
 from edway2.commands.editing import (
     delete_range,
     extract_clips_in_range,
-    insert_clips_at,
     make_room_at,
     ripple_delete_range,
     shift_clips_after,
 )
+from edway2.parser import COMMANDS, Command, parse
 from edway2.session import Clip, Session, Track
 
 
@@ -356,3 +356,216 @@ def test_e10_make_room_preserves_count(data):
     assert len(track.clips) == original_count, (
         f"Clip count changed: {original_count} -> {len(track.clips)}"
     )
+
+
+# ---------------------------------------------------------------------------
+# Clip/Track invariant property tests (C1-C4)
+# ---------------------------------------------------------------------------
+
+
+@given(clip=clip_strategy())
+@settings(max_examples=200)
+def test_c1_clip_duration_consistency(clip):
+    """C1: clip.duration == clip.source_end - clip.source_start, and duration >= 0."""
+    assert clip.duration == clip.source_end - clip.source_start
+    assert clip.duration >= 0
+
+
+@given(track=track_strategy())
+@settings(max_examples=200)
+def test_c2_track_duration_zero_iff_empty(track):
+    """C2: track.duration == 0.0 if and only if len(track.clips) == 0."""
+    if len(track.clips) == 0:
+        assert track.duration == 0.0
+    else:
+        assert track.duration > 0.0
+
+
+@given(track=track_strategy(clips=st.lists(clip_strategy(), min_size=1, max_size=5)))
+@settings(max_examples=200)
+def test_c3_track_duration_covers_all_clips(track):
+    """C3: track.duration >= max(clip.position + clip.duration for all clips)."""
+    max_clip_end = max(c.position + c.duration for c in track.clips)
+    assert track.duration >= max_clip_end
+
+
+@given(track=track_strategy(clips=st.lists(clip_strategy(), min_size=1, max_size=5)))
+@settings(max_examples=200)
+def test_c4_clips_at_finds_clip_at_own_position(track):
+    """C4: For every clip c, c in track.clips_at(track.start_time + c.position)."""
+    for c in track.clips:
+        found = track.clips_at(track.start_time + c.position)
+        assert c in found, (
+            f"Clip at position {c.position} not found by clips_at("
+            f"{track.start_time + c.position}). "
+            f"Clip range: [{c.position}, {c.position + c.duration}), "
+            f"start_time: {track.start_time}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Parser property tests (P1-P5)
+# ---------------------------------------------------------------------------
+
+
+@given(data=st.data())
+@settings(max_examples=200)
+def test_p1_parse_never_returns_none(data):
+    """P1: parse() returns a Command (not None) for valid command strings."""
+    # Generate various valid command strings
+    kind = data.draw(st.sampled_from([
+        "standalone", "number_cmd", "range_cmd", "addr_only_num",
+        "addr_only_dollar", "addr_only_offset",
+    ]))
+    if kind == "standalone":
+        cmd_name = data.draw(st.sampled_from(COMMANDS))
+        line = cmd_name
+    elif kind == "number_cmd":
+        n = data.draw(st.integers(min_value=1, max_value=9999))
+        line = f"{n}p"
+    elif kind == "range_cmd":
+        a = data.draw(st.integers(min_value=1, max_value=9999))
+        b = data.draw(st.integers(min_value=a, max_value=min(a + 1000, 9999)))
+        line = f"{a},{b}d"
+    elif kind == "addr_only_num":
+        n = data.draw(st.integers(min_value=1, max_value=9999))
+        line = str(n)
+    elif kind == "addr_only_dollar":
+        line = "$"
+    elif kind == "addr_only_offset":
+        n = data.draw(st.integers(min_value=1, max_value=100))
+        line = f".+{n}"
+    else:
+        line = "p"
+
+    result = parse(line)
+    assert result is not None
+    assert isinstance(result, Command)
+
+
+@given(
+    m=st.integers(min_value=0, max_value=59),
+    s=st.integers(min_value=0, max_value=59),
+)
+@settings(max_examples=200)
+def test_p2_time_address_precision(m, s):
+    """P2: parse('@M:SSp') gives addr1.value == m * 60 + s."""
+    cmd = parse(f"@{m}:{s:02d}p")
+    assert cmd.addr1 is not None
+    assert cmd.addr1.type == "time"
+    assert cmd.addr1.value == m * 60 + s
+
+
+def test_p2_time_address_millis():
+    """P2 (millis): parse('@1:30.500p') gives addr1.value == 90.5."""
+    cmd = parse("@1:30.500p")
+    assert cmd.addr1 is not None
+    assert cmd.addr1.value == 90.5
+
+
+@given(n=st.integers(min_value=1, max_value=9999))
+@settings(max_examples=200)
+def test_p3_number_address_round_trip(n):
+    """P3: parse(f'{n}p') gives addr1.type == 'number' and addr1.value == n."""
+    cmd = parse(f"{n}p")
+    assert cmd.addr1 is not None
+    assert cmd.addr1.type == "number"
+    assert cmd.addr1.value == n
+
+
+@settings(max_examples=200)
+@given(cmd_name=st.sampled_from(COMMANDS))
+def test_p4_every_command_parseable(cmd_name):
+    """P4: Every command name in COMMANDS is parseable."""
+    try:
+        result = parse(cmd_name)
+        assert isinstance(result, Command)
+        # The parsed command name should match, unless it was interpreted
+        # as an address (e.g., single-letter overlapping with address syntax)
+        # For multi-letter commands, name should match
+        if len(cmd_name) > 1 or not cmd_name.isdigit():
+            assert result.name == cmd_name or result.name == "", (
+                f"Expected command name '{cmd_name}', got '{result.name}'"
+            )
+    except Exception as e:
+        # Note commands that fail to parse but don't fail the test hard
+        # (single-letter overlap with address syntax)
+        raise AssertionError(
+            f"Command '{cmd_name}' failed to parse: {e}"
+        ) from e
+
+
+@given(data=st.data())
+@settings(max_examples=200)
+def test_p5_range_requires_addr1(data):
+    """P5: If parse() returns addr2 is not None, then addr1 is not None."""
+    kind = data.draw(st.sampled_from([
+        "range_cmd", "single_cmd", "addr_only",
+    ]))
+    if kind == "range_cmd":
+        a = data.draw(st.integers(min_value=1, max_value=999))
+        b = data.draw(st.integers(min_value=a, max_value=min(a + 100, 999)))
+        cmd_name = data.draw(st.sampled_from(["p", "d", "z"]))
+        line = f"{a},{b}{cmd_name}"
+    elif kind == "single_cmd":
+        n = data.draw(st.integers(min_value=1, max_value=999))
+        line = f"{n}p"
+    else:
+        line = "$"
+
+    result = parse(line)
+    if result.addr2 is not None:
+        assert result.addr1 is not None, (
+            f"addr2 is set but addr1 is None for input '{line}'"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Mute/Solo proxy property tests (X1-X4)
+# ---------------------------------------------------------------------------
+
+
+@given(session=session_strategy(), data=st.data())
+@settings(max_examples=200)
+def test_x1_mute_add_contains(session, data):
+    """X1: After muted_tracks.add(i), i in muted_tracks is True."""
+    assume(len(session.tracks) > 0)
+    i = data.draw(st.integers(min_value=0, max_value=len(session.tracks) - 1))
+    session.muted_tracks.add(i)
+    assert i in session.muted_tracks
+
+
+@given(session=session_strategy(), data=st.data())
+@settings(max_examples=200)
+def test_x2_solo_discard_contains(session, data):
+    """X2: After add then discard, i not in soloed_tracks."""
+    assume(len(session.tracks) > 0)
+    i = data.draw(st.integers(min_value=0, max_value=len(session.tracks) - 1))
+    session.soloed_tracks.add(i)
+    session.soloed_tracks.discard(i)
+    assert i not in session.soloed_tracks
+
+
+@given(session=session_strategy(), data=st.data())
+@settings(max_examples=200)
+def test_x3_selected_tracks_never_empty(session, data):
+    """X3: selected_tracks() always has at least 1 track."""
+    assume(len(session.tracks) > 0)
+    session.current_track = data.draw(
+        st.integers(min_value=0, max_value=len(session.tracks) - 1)
+    )
+    assert len(session.selected_tracks()) >= 1
+
+
+@given(session=session_strategy(), data=st.data())
+@settings(max_examples=200)
+def test_x4_selected_tracks_default(session, data):
+    """X4: With no track selected, selected_tracks() == [current_track]."""
+    assume(len(session.tracks) > 0)
+    session.current_track = data.draw(
+        st.integers(min_value=0, max_value=len(session.tracks) - 1)
+    )
+    for track in session.tracks:
+        track.selected = False
+    result = session.selected_tracks()
+    assert result == [session.tracks[session.current_track]]
