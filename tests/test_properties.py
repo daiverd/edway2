@@ -16,6 +16,14 @@ from conftest_hypothesis import (
     session_strategy,
     track_strategy,
 )
+from edway2.commands.editing import (
+    delete_range,
+    extract_clips_in_range,
+    insert_clips_at,
+    make_room_at,
+    ripple_delete_range,
+    shift_clips_after,
+)
 from edway2.session import Clip, Session, Track
 
 
@@ -184,3 +192,167 @@ def test_s3_session_file_round_trip(session):
     assert len(session.tracks) == len(restored.tracks)
     for orig_track, rest_track in zip(session.tracks, restored.tracks):
         assert_tracks_equal(orig_track, rest_track)
+
+
+# ---------------------------------------------------------------------------
+# Editing operation property tests (E1-E10)
+# ---------------------------------------------------------------------------
+
+
+@st.composite
+def track_with_range(draw):
+    """Generate a track with clips and a valid time range within it."""
+    track = draw(track_strategy(clips=st.lists(clip_strategy(), min_size=1, max_size=5)))
+    # Find the extent of clips
+    max_end = max(c.position + c.duration for c in track.clips)
+    start = draw(st.floats(min_value=0.0, max_value=max(0.001, max_end), allow_nan=False, allow_infinity=False))
+    end = draw(st.floats(min_value=start + 0.001, max_value=max(start + 0.002, max_end + 1.0), allow_nan=False, allow_infinity=False))
+    return track, start, end
+
+
+@given(data=track_with_range())
+@settings(max_examples=200)
+def test_e1_delete_then_extract_is_empty(data):
+    """E1: After delete_range, extract_clips_in_range returns empty list."""
+    track, start, end = data
+    delete_range(track, start, end)
+    extracted = extract_clips_in_range(track, start, end)
+    assert extracted == [], (
+        f"Expected empty list after delete, got {len(extracted)} clips. "
+        f"Range: [{start}, {end})"
+    )
+
+
+@given(data=track_with_range())
+@settings(max_examples=200)
+def test_e2_extract_duration_bounded(data):
+    """E2: Each extracted clip's duration is <= range duration.
+
+    Note: overlapping clips at the same position can produce multiple
+    extracted clips whose sum exceeds the range, but each individual
+    clip must fit within the range.
+    """
+    track, start, end = data
+    extracted = extract_clips_in_range(track, start, end)
+    range_duration = end - start
+    for clip in extracted:
+        assert clip.duration <= range_duration + 1e-9, (
+            f"Extracted clip duration {clip.duration} > range duration {range_duration}"
+        )
+
+
+@given(data=track_with_range())
+@settings(max_examples=200)
+def test_e3_extract_positions_non_negative(data):
+    """E3: All extracted clips have position >= 0."""
+    track, start, end = data
+    extracted = extract_clips_in_range(track, start, end)
+    for clip in extracted:
+        assert clip.position >= 0, (
+            f"Extracted clip has negative position: {clip.position}"
+        )
+
+
+@given(data=track_with_range())
+@settings(max_examples=200)
+def test_e4_delete_preserves_outsiders(data):
+    """E4: Clips fully outside deleted range are preserved unchanged."""
+    track, start, end = data
+
+    # Snapshot clips fully outside the range before delete
+    outsiders_before = []
+    for clip in track.clips:
+        clip_end = clip.position + clip.duration
+        if clip_end <= start or clip.position >= end:
+            outsiders_before.append((clip.source, clip.source_start, clip.source_end, clip.position))
+
+    delete_range(track, start, end)
+
+    # Verify outsiders are still present
+    outsiders_after = [
+        (c.source, c.source_start, c.source_end, c.position) for c in track.clips
+        if c.position + c.duration <= start or c.position >= end
+    ]
+
+    # Every original outsider should still be present
+    for ob in outsiders_before:
+        assert ob in outsiders_after, (
+            f"Outsider clip {ob} was lost after delete_range"
+        )
+
+
+@given(data=track_with_range())
+@settings(max_examples=200)
+def test_e5_delete_clip_count_bound(data):
+    """E5: delete_range clip count bounded by 2 * original count."""
+    track, start, end = data
+    old_count = len(track.clips)
+    delete_range(track, start, end)
+    new_count = len(track.clips)
+    assert new_count <= 2 * old_count, (
+        f"Clip count grew too much: {old_count} -> {new_count}"
+    )
+
+
+@given(data=track_with_range())
+@settings(max_examples=200)
+def test_e6_ripple_delete_no_negative_positions(data):
+    """E6: After ripple_delete_range, no clip has position < 0."""
+    track, start, end = data
+    ripple_delete_range(track, start, end)
+    for clip in track.clips:
+        assert clip.position >= -1e-9, (
+            f"Clip has negative position {clip.position} after ripple delete"
+        )
+
+
+@given(data=track_with_range())
+@settings(max_examples=200)
+def test_e7_shift_preserves_clip_count(data):
+    """E7: shift_clips_after does not add or remove clips."""
+    track, start, end = data
+    original_count = len(track.clips)
+    delta = end - start  # arbitrary positive delta
+    shift_clips_after(track, start, delta)
+    assert len(track.clips) == original_count, (
+        f"Clip count changed: {original_count} -> {len(track.clips)}"
+    )
+
+
+@given(data=track_with_range())
+@settings(max_examples=200)
+def test_e8_shift_no_negative_positions(data):
+    """E8: After shift_clips_after with any delta, no clip has position < 0."""
+    track, start, end = data
+    delta = -(end - start)  # negative delta to test clamping
+    shift_clips_after(track, start, delta)
+    for clip in track.clips:
+        assert clip.position >= -1e-9, (
+            f"Clip has negative position {clip.position} after shift"
+        )
+
+
+@given(data=track_with_range())
+@settings(max_examples=200)
+def test_e9_ripple_delete_reduces_content(data):
+    """E9: After ripple_delete_range, total content duration <= original."""
+    track, start, end = data
+    original_total = sum(c.duration for c in track.clips)
+    ripple_delete_range(track, start, end)
+    new_total = sum(c.duration for c in track.clips)
+    assert new_total <= original_total + 1e-9, (
+        f"Content duration increased: {original_total} -> {new_total}"
+    )
+
+
+@given(data=track_with_range())
+@settings(max_examples=200)
+def test_e10_make_room_preserves_count(data):
+    """E10: make_room_at does not add or remove clips."""
+    track, start, end = data
+    original_count = len(track.clips)
+    duration = end - start
+    make_room_at(track, start, duration)
+    assert len(track.clips) == original_count, (
+        f"Clip count changed: {original_count} -> {len(track.clips)}"
+    )
