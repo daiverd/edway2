@@ -84,7 +84,7 @@ def cmd_info(project: "Project", cmd: Command) -> None:
     Displays: project name, session name, track count, duration, blocks.
     """
     print(f"Project: {project.path.name}")
-    print(f"Session: {project.session.timeline.name}")
+    print(f"Session: {project.session.name}")
     print(f"Tracks: {project.session.track_count}")
     print(f"Duration: {project.session.duration:.2f}s")
     print(f"Blocks: {project.blocks.count} @ {display_time(project.session.block_duration_ms)}")
@@ -167,8 +167,9 @@ def cmd_ms(project: "Project", cmd: Command) -> None:
         if ms <= 0:
             print("? block duration must be positive")
             return
+        project.prepare_edit()
         project.session.block_duration_ms = ms
-        project.mark_dirty()
+        project.mark_dirty(f"ms {cmd.arg}")
         print(f"block duration: {display_time(ms)}")
     else:
         print(f"block duration: {display_time(project.session.block_duration_ms)}")
@@ -197,8 +198,9 @@ def cmd_nb(project: "Project", cmd: Command) -> None:
             new_ms = ceil((duration * 1000) / target_count)
             if new_ms <= 0:
                 new_ms = 1  # minimum 1ms
+            project.prepare_edit()
             project.session.block_duration_ms = new_ms
-            project.mark_dirty()
+            project.mark_dirty(f"nb {cmd.arg}")
             print(f"blocks: {project.blocks.count} @ {display_time(new_ms)}")
         except ValueError:
             print(f"? invalid number: {cmd.arg}")

@@ -8,6 +8,7 @@ from edway2.commands import command
 from edway2.parser import Command, Address
 from edway2.audio import load_audio, play_until_keypress, stop_playback
 from edway2.errors import AudioError
+from edway2.session import Clip, Track
 
 if True:  # TYPE_CHECKING workaround
     from edway2.project import Project
@@ -96,8 +97,140 @@ def get_playback_range(project: "Project", cmd: Command) -> tuple[float, float]:
     return start, end
 
 
+def _get_clip_sample_rate(project: "Project", clip: Clip) -> int:
+    """Get sample rate for a clip, loading from file if needed."""
+    if clip._sample_rate is not None:
+        return clip._sample_rate
+
+    # Load from file
+    from edway2.audio import read_audio_info
+    source_path = _resolve_source_path(project, clip.source)
+    try:
+        info = read_audio_info(source_path)
+        clip._sample_rate = info["sample_rate"]
+        clip._channels = info["channels"]
+        return clip._sample_rate
+    except Exception:
+        return 44100  # default
+
+
+def _get_clip_channels(project: "Project", clip: Clip) -> int:
+    """Get channel count for a clip."""
+    if clip._channels is not None:
+        return clip._channels
+
+    # Will be set by _get_clip_sample_rate
+    _get_clip_sample_rate(project, clip)
+    return clip._channels if clip._channels is not None else 2
+
+
+def _resolve_source_path(project: "Project", source: str) -> Path:
+    """Resolve source path to absolute path."""
+    if source.startswith("sources/"):
+        return project.path / source
+    return Path(source)
+
+
+def db_to_linear(db: float) -> float:
+    """Convert decibels to linear gain."""
+    return 10 ** (db / 20)
+
+
+def render_track(
+    project: "Project",
+    track,
+    start_time: float,
+    end_time: float,
+    sample_rate: int,
+    channels: int,
+) -> np.ndarray:
+    """Render a single track to audio buffer.
+
+    Args:
+        project: Project instance.
+        track: Track to render.
+        start_time: Start time in seconds.
+        end_time: End time in seconds.
+        sample_rate: Output sample rate.
+        channels: Output channel count.
+
+    Returns:
+        Audio data as numpy array.
+    """
+    duration = end_time - start_time
+    num_frames = int(duration * sample_rate)
+    output = np.zeros((num_frames, channels), dtype=np.float32)
+
+    # Walk through clips and render those that overlap our range
+    for clip in track.clips:
+        # Calculate global position of this clip
+        clip_start = track.start_time + clip.position
+        clip_end = clip_start + clip.duration
+
+        # Check if this clip overlaps with our render range
+        if clip_end <= start_time or clip_start >= end_time:
+            continue
+
+        # Calculate overlap
+        overlap_start = max(start_time, clip_start)
+        overlap_end = min(end_time, clip_end)
+
+        # Get file path
+        file_path = _resolve_source_path(project, clip.source)
+
+        # Get sample rate for this clip
+        clip_sr = _get_clip_sample_rate(project, clip)
+
+        # Calculate frame positions in source file
+        clip_offset = overlap_start - clip_start
+        source_offset = clip.source_start + clip_offset
+        clip_start_frame = int(source_offset * clip_sr)
+        clip_num_frames = int((overlap_end - overlap_start) * clip_sr)
+
+        if clip_num_frames > 0:
+            try:
+                data, sr = load_audio(file_path, clip_start_frame, clip_num_frames)
+
+                # Apply clip gain
+                if clip.gain != 0.0:
+                    data = data * db_to_linear(clip.gain)
+
+                # Where in output buffer to write
+                out_start = int((overlap_start - start_time) * sample_rate)
+
+                # Handle channel mismatch
+                if len(data.shape) == 1:
+                    data = data.reshape(-1, 1)
+
+                if data.shape[1] != channels:
+                    if data.shape[1] == 1 and channels == 2:
+                        data = np.column_stack([data[:, 0], data[:, 0]])
+                    elif data.shape[1] == 2 and channels == 1:
+                        data = ((data[:, 0] + data[:, 1]) / 2).reshape(-1, 1)
+                    elif data.shape[1] > channels:
+                        data = data[:, :channels]
+                    else:
+                        data = np.column_stack([data[:, 0]] * channels)
+
+                # Mix into output (additive for overlapping clips)
+                actual_len = min(len(data), len(output) - out_start)
+                if actual_len > 0:
+                    output[out_start:out_start + actual_len] += data[:actual_len]
+
+            except Exception:
+                pass  # Leave silence on error
+
+    # Apply track gain
+    if track.gain != 0.0:
+        output *= db_to_linear(track.gain)
+
+    return output
+
+
 def render_timeline(project: "Project", start_time: float, end_time: float) -> tuple[np.ndarray, int]:
     """Render timeline audio between start and end times.
+
+    Mixes all tracks together, respecting mute/solo settings.
 
     Args:
         project: Project instance.
@@ -107,43 +240,57 @@ def render_timeline(project: "Project", start_time: float, end_time: float) -> t
     Returns:
         Tuple of (audio_data, sample_rate).
     """
-    # For now, simple implementation: find first clip and load from it
-    # TODO: proper mixing of multiple tracks/clips
+    session = project.session
 
-    track = project.session.get_track(project.session.current_track)
+    # Find tracks to play
+    any_solo = any(t.soloed for t in session.tracks)
+    tracks_to_play = []
 
-    if len(track) == 0:
+    for track in session.tracks:
+        if track.muted:
+            continue
+        if any_solo and not track.soloed:
+            continue
+        if len(track.clips) > 0:
+            tracks_to_play.append(track)
+
+    if not tracks_to_play:
         raise AudioError("no clips in track")
 
-    # Get first clip
-    clip = track[0]
-    media_ref = clip.media_reference
+    # Get sample rate from first clip of first track
+    sample_rate = 44100
+    channels = 2
+    for track in tracks_to_play:
+        if track.clips:
+            sample_rate = _get_clip_sample_rate(project, track.clips[0])
+            channels = _get_clip_channels(project, track.clips[0])
+            break
 
-    if media_ref is None:
-        raise AudioError("clip has no media reference")
-
-    # Get file path
-    target_url = media_ref.target_url
-    if target_url.startswith("sources/"):
-        file_path = project.path / target_url
-    else:
-        file_path = Path(target_url)
-
-    # Get clip info
-    clip_sr = media_ref.metadata.get("edway2", {}).get("sample_rate", 44100)
-
-    # Calculate frame range
-    start_frame = int(start_time * clip_sr)
-    end_frame = int(end_time * clip_sr)
-    num_frames = end_frame - start_frame
+    # Calculate output buffer size
+    duration = end_time - start_time
+    num_frames = int(duration * sample_rate)
 
     if num_frames <= 0:
         raise AudioError("invalid playback range")
 
-    # Load audio
-    data, sr = load_audio(file_path, start_frame, num_frames)
+    # Initialize output buffer with silence
+    output = np.zeros((num_frames, channels), dtype=np.float32)
 
-    return data, sr
+    # Render and mix all tracks
+    for track in tracks_to_play:
+        track_audio = render_track(
+            project, track, start_time, end_time, sample_rate, channels
+        )
+        output += track_audio
+
+    # Apply master gain
+    if session.master_gain != 0.0:
+        output *= db_to_linear(session.master_gain)
+
+    # Clip to prevent distortion
+    np.clip(output, -1.0, 1.0, out=output)
+
+    return output, sample_rate
 
 
 @command("p")
@@ -166,6 +313,8 @@ def cmd_play(project: "Project", cmd: Command) -> None:
         stopped = play_until_keypress(data, sr)
         if stopped:
             print("(stopped)")
+        # Update point to end of played range
+        project.session.current_position = end
     except ValueError as e:
         print(f"? {e}")
     except AudioError as e:
@@ -216,6 +365,8 @@ def cmd_play_seconds(project: "Project", cmd: Command) -> None:
         stopped = play_until_keypress(data, sr)
         if stopped:
             print("(stopped)")
+        # Update point to end of played range
+        project.session.current_position = end
     except AudioError as e:
         print(f"? {e}")
     except Exception as e:

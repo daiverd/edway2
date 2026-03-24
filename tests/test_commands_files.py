@@ -12,8 +12,8 @@ class TestReadCommand:
     def test_read_creates_clip(self, tmp_project, sample_wav):
         """Test reading a file creates a clip on the timeline."""
         tmp_project.execute(f"r {sample_wav}")
-        track = tmp_project.session.timeline.tracks[0]
-        assert len(track) == 1
+        track = tmp_project.session.tracks[0]
+        assert len(track.clips) == 1
 
     def test_read_sets_duration(self, tmp_project, sample_wav):
         """Test reading a file sets correct duration."""
@@ -38,8 +38,8 @@ class TestReadCommand:
         tmp_project.execute(f"r {sample_wav_2sec}")  # 2 seconds
         tmp_project.execute(f"1r {sample_wav}")  # insert at block 1
         # Should have 2 clips now
-        track = tmp_project.session.timeline.tracks[0]
-        assert len(track) == 2
+        track = tmp_project.session.tracks[0]
+        assert len(track.clips) == 2
 
     def test_read_marks_dirty(self, tmp_project, sample_wav):
         """Test reading marks project as dirty."""

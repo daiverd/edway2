@@ -46,6 +46,7 @@ class TestPlayCommand:
     def test_play_to_end(self, tmp_project, sample_wav, mock_playback):
         """Test playing from block to end."""
         tmp_project.execute(f"r {sample_wav}")
+        tmp_project.session.current_position = 0.0  # reset position
         tmp_project.execute(".,$p")  # current to end
         mock_playback.assert_called_once()
 
@@ -71,12 +72,14 @@ class TestPlaySecondsCommand:
     def test_z_plays_default_seconds(self, tmp_project, sample_wav, mock_playback):
         """Test z plays by default."""
         tmp_project.execute(f"r {sample_wav}")
+        tmp_project.session.current_position = 0.0  # reset position
         tmp_project.execute("z")
         mock_playback.assert_called_once()
 
     def test_z_with_seconds_arg(self, tmp_project, sample_wav, mock_playback):
         """Test z with explicit seconds."""
         tmp_project.execute(f"r {sample_wav}")
+        tmp_project.session.current_position = 0.0  # reset position
         tmp_project.execute("z0.5")  # play 0.5 seconds
         mock_playback.assert_called_once()
 

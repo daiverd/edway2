@@ -2,10 +2,9 @@
 
 from pathlib import Path
 
-import opentimelineio as otio
-
 from edway2.commands import command
 from edway2.parser import Command
+from edway2.session import Clip
 from edway2.audio import read_audio_info, copy_to_sources
 from edway2.errors import FileError, AudioError
 
@@ -44,54 +43,43 @@ def cmd_read(project: "Project", cmd: Command) -> None:
         # Copy to sources folder
         dest_path = copy_to_sources(src_path, project.sources_dir)
 
-        # Create OTIO clip
         # Use relative path from project root
         rel_path = project.resolve_path(dest_path)
 
-        # Create media reference
-        media_ref = otio.schema.ExternalReference(
-            target_url=str(rel_path),
-            available_range=otio.opentime.TimeRange(
-                start_time=otio.opentime.RationalTime(0, info["sample_rate"]),
-                duration=otio.opentime.RationalTime(
-                    info["frames"], info["sample_rate"]
-                ),
-            ),
-        )
-
-        # Store audio metadata
-        media_ref.metadata["edway2"] = {
-            "sample_rate": info["sample_rate"],
-            "channels": info["channels"],
-            "duration": info["duration"],
-            "original_path": str(src_path),
-        }
+        # Determine insert position (where in the track the clip starts)
+        track = project.session.get_track(project.session.current_track)
+        if cmd.addr1 is not None:
+            # Insert at specified block position
+            from edway2.commands.playback import resolve_address
+            block = resolve_address(project, cmd.addr1, 1)
+            position = project.blocks.to_time(block)
+        else:
+            # Append to end of track
+            position = track.duration
 
         # Create clip
-        clip = otio.schema.Clip(
-            name=src_path.name,
-            media_reference=media_ref,
-            source_range=otio.opentime.TimeRange(
-                start_time=otio.opentime.RationalTime(0, info["sample_rate"]),
-                duration=otio.opentime.RationalTime(
-                    info["frames"], info["sample_rate"]
-                ),
-            ),
+        clip = Clip(
+            source=rel_path,
+            source_start=0.0,
+            source_end=info["duration"],
+            position=position,
+            gain=0.0,
         )
+        # Store metadata for playback
+        clip._sample_rate = info["sample_rate"]
+        clip._channels = info["channels"]
 
-        # Get current track
-        track = project.session.get_track(project.session.current_track)
+        # Prepare for edit (commits previous if dirty)
+        project.prepare_edit()
 
-        # Determine insert position
-        if cmd.addr1 is not None:
-            # Insert at specified position
-            # For now, just append (position handling comes in Phase 5)
-            track.append(clip)
-        else:
-            # Append to end
-            track.append(clip)
+        # Add clip to track
+        track.clips.append(clip)
 
-        project.mark_dirty()
+        project.mark_dirty(f"r {src_path.name}")
+
+        # Update point to end of inserted audio
+        project.session.current_position = project.session.duration
+
         print(f"read: {src_path.name} ({info['duration']:.2f}s)")
 
     except FileError as e:
@@ -104,25 +92,30 @@ def cmd_read(project: "Project", cmd: Command) -> None:
 
 @command("save")
 def cmd_save(project: "Project", cmd: Command) -> None:
-    """Save current session.
+    """Save current session, optionally with a tag.
 
     Usage:
-        save [message]
+        save              - commit only
+        save <name>       - commit and create tag
+
+    Tags create named checkpoints you can reference later.
+    Duplicate tag names get auto-suffixed: mix, mix_2, mix_3.
     """
-    message = cmd.arg if cmd.arg else "save"
-    project.save(message)
-    print(f"saved: {project.session_file.name}")
+    if not project.is_dirty:
+        if cmd.arg:
+            # Create tag even if not dirty
+            actual_tag = project._create_tag(cmd.arg)
+            print(f"tagged: {actual_tag}")
+        else:
+            print("(nothing to save)")
+        return
+
+    tag = cmd.arg if cmd.arg else None
+    project.save(message="save", tag=tag)
+
+    if tag:
+        print(f"saved and tagged: {tag}")
+    else:
+        print(f"saved: {project.session_file.name}")
 
 
-@command("w")
-def cmd_write(project: "Project", cmd: Command) -> None:
-    """Write/export timeline to file.
-
-    Usage:
-        w [file]          - render entire timeline
-        1,10w [file]      - render blocks 1-10
-
-    Output goes to renders/ folder.
-    """
-    # TODO: Implement in Phase 13
-    print("? write not implemented yet")
