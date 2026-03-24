@@ -87,7 +87,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "gitpython" },
-    { name = "opentimelineio" },
+    { name = "numpy" },
     { name = "pedalboard" },
     { name = "prompt-toolkit" },
     { name = "sounddevice" },
@@ -99,6 +99,9 @@ dev = [
     { name = "pytest" },
     { name = "pytest-mock" },
 ]
+export = [
+    { name = "opentimelineio" },
+]
 
 [package.dev-dependencies]
 dev = [
@@ -109,7 +112,8 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "gitpython", specifier = ">=3.1.0" },
-    { name = "opentimelineio", specifier = ">=0.15.0" },
+    { name = "numpy", specifier = ">=1.24.0" },
+    { name = "opentimelineio", marker = "extra == 'export'", specifier = ">=0.15.0" },
     { name = "pedalboard", specifier = ">=0.9.0" },
     { name = "prompt-toolkit", specifier = ">=3.0.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0.0" },
@@ -117,7 +121,7 @@ requires-dist = [
     { name = "sounddevice", specifier = ">=0.4.0" },
     { name = "soundfile", specifier = ">=0.12.0" },
 ]
-provides-extras = ["dev"]
+provides-extras = ["dev", "export"]
 
 [package.metadata.requires-dev]
 dev = [
