@@ -4,94 +4,57 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-edway2 is a non-destructive multitrack audio editor with a line-editor (ed/vim style) command interface. It's a Python rewrite of the original C-based edway, using modern libraries.
-
-## Development Approach
-
-**TDD**: Write tests first, then implement. Each phase must pass automated tests AND manual verification before proceeding.
-
-**Spec-driven**: All behavior is defined in `SPEC.md`. Consult it for command syntax, interfaces, and test cases.
+edway2 is a non-destructive multitrack audio editor with a line-editor (ed/vim style) command interface. Python rewrite of the original C-based edway.
 
 ## Commands
 
 ```bash
-# Add dependencies
-uv add <package>
-uv add --dev <package>
-
-# Run tests
-uv run pytest
-
-# Run single test
-uv run pytest tests/test_parser.py::test_parse_simple -v
-
-# Run the application
-uv run edway2
-uv run edway2 --version
+uv run pytest                                    # Run all tests
+uv run pytest tests/test_parser.py::test_name -v # Run single test
+uv run edway2                                    # Run application
+uv run edway2 /path/to/project                   # Open/create project
 ```
 
-## Project Structure
+## Architecture
 
+### Data Flow
 ```
-edway2/
-├── SPEC.md              # Full specification (READ THIS FIRST)
-├── CLAUDE.md            # This file
-├── pyproject.toml       # Dependencies and project config
-├── src/edway2/          # Source code
-│   ├── __init__.py      # Version
-│   ├── __main__.py      # Entry point
-│   ├── cli.py           # CLI argument parsing
-│   ├── repl.py          # REPL loop
-│   ├── parser.py        # Command parser
-│   ├── commands/        # Command implementations
-│   ├── session.py       # OTIO timeline wrapper
-│   ├── project.py       # Project folder management
-│   ├── blocks.py        # Block addressing
-│   ├── audio.py         # Playback/recording
-│   └── ...
-├── tests/               # pytest tests
-└── reference/           # Original edway 0.2 C code (for behavior reference)
+User input → repl.py → parser.py → commands/*.py → project.py → session.py
+                                                       ↓
+                                                   git (undo)
 ```
 
-## Key Dependencies
+### Key Abstractions
 
-- **pedalboard**: Audio engine, VST3/AU plugins, effects
-- **soundfile**: Audio file I/O (WAV, FLAC)
-- **sounddevice**: Live playback/recording
-- **opentimelineio**: Timeline model
-- **prompt_toolkit**: TUI/REPL
-- **gitpython**: Undo via git
+**Project** (`project.py`): Wraps a folder containing `<name>.edway`, `sources/`, `renders/`, and `.git/`. Manages git commits for undo. All commands receive a Project instance.
 
-## Implementation Phases
+**Session** (`session.py`): Timeline data model - tracks, clips, marks, regions. Serializes to JSON. Clips reference source files, have positions (seconds), no explicit gap objects.
 
-See SPEC.md for detailed phases. Currently working on: **Phase 4 (Read Audio File)**.
+**BlockView** (`blocks.py`): Virtual view over timeline. Converts between 1-indexed block numbers and seconds based on `block_duration_ms`. Blocks include gaps (silence = no clip at position).
 
-Each phase has:
-- Specific files to create
-- Test code to write first
-- "Done when" acceptance criterion
+**Parser** (`parser.py`): ed-style grammar: `[range] cmd [dest] [arg]`. Addresses: number, `.` (current), `$` (last), `'x` (mark), `@M:SS` (time). Returns `Command` dataclass.
 
-## Test Files
+**Command Registry** (`commands/__init__.py`): `@command("name")` decorator registers handlers. Handler signature: `(project: Project, cmd: Command) -> None`.
 
-Real audio files for manual testing are in `tests/test_files/`:
-- `airf.mp3` - MP3 test file
-- `Count.wav` - WAV test file
-- `Chislehurst Caves/*.wav` - Multiple WAV files
+### Position-Based Clips (vs sequential)
+Clips have absolute `position` in track (seconds). Gaps are implicit - no clip at a position = silence. This simplifies editing: delete just removes clips, no gap management needed. OTIO is only used for export interchange.
 
-**Important**: Do not modify these files directly. Copy them to a test project folder for testing.
+### Undo via Git
+Every edit auto-commits the `.edway` file. `u` navigates back, `U` forward. `_undo_offset` tracks position in history. `prepare_edit()` handles dirty state before modifications.
 
-## Reference Code
+## Development
 
-Original edway 0.2 C source is in `reference/` for behavioral reference. Key files:
-- `reference/session.c` - Edit mode, block operations
-- `reference/support.c` - Utility functions, command parsing
-- `reference/doc/HELP/` - Original command help text
+**TDD**: Write tests first. `SPEC.md` defines all behavior.
+
+**Phase status**: Phases 0-13 complete (through Export). See `SPEC.md` for remaining phases (Effects, Regions, OTIO export, Plugins).
+
+**Test files**: `tests/test_files/` contains audio for manual testing. Don't modify directly.
+
+**Reference**: Original C code in `reference/` for behavioral reference.
 
 ## Design Decisions
 
-See SPEC.md "Command Reference" section. Key points:
-- **Ripple OFF by default**: Delete leaves gap, move/copy layers
-- **Ripple commands**: `rd`, `rm`, `rt` for ripple behavior
+- **Ripple OFF by default**: `d` leaves gap, `rd` ripples
 - **Insert BEFORE**: `5m10` inserts before block 10, `5m$` appends
-- **Multitrack**: Edit affects current track, playback mixes all
-- **Git undo**: Every edit commits, unlimited undo via git
+- **Track selection**: Commands affect current track unless `ts` selects others
+- **Solo overrides mute**: If any track soloed, only soloed tracks play
