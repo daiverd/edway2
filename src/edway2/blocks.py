@@ -82,7 +82,13 @@ class BlockView:
         """
         if seconds < 0:
             raise ValueError(f"Time must be >= 0, got {seconds}")
-        return floor(seconds * 1000 / self.block_duration_ms) + 1
+        raw = seconds * 1000 / self.block_duration_ms
+        # Round to nearest integer when within floating-point epsilon,
+        # so that from_time(to_time(b)) == b holds exactly.
+        rounded = round(raw)
+        if abs(raw - rounded) < 1e-9:
+            raw = rounded
+        return floor(raw) + 1
 
     def clamp(self, block: int) -> int:
         """Clamp block number to valid range [1, count].
