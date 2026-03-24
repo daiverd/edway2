@@ -72,15 +72,15 @@ COMMANDS = [
     "save", "load", "quit", "help",
     "addtrack", "rmtrack", "tracks", "track",
     "mute", "solo",
-    "region", "regions",
-    "branch", "branches", "checkout", "tag",
+    "regions", "region",  # longer first
     "split", "fxlist", "fxrm",
     "gen", "cap",
     # Two-letter commands
     "rm", "rt", "rd",  # ripple commands (must come before r)
     "db", "fi", "fo", "xf", "mx", "fx",
-    "tr", "sr", "nc", "ms", "nb", "uh",
+    "tr", "ts", "sr", "nc", "ms", "nb", "uh",
     "q!",  # force quit
+    "u!",  # force undo (discard changes)
     # Single-letter commands
     "p", "z", "d", "m", "t", "r", "w", "k", "q", "u", "U",
     "f", "l", "h", "?", "=", "!",
@@ -114,9 +114,17 @@ def parse(line: str) -> Command:
         pos += 1
         addr2, pos = _parse_address(line, pos)
 
+    # Skip optional whitespace before command (for "1,5 region intro")
+    while pos < len(line) and line[pos] == " ":
+        pos += 1
+
     # Parse command name
     cmd_name, pos = _parse_command_name(line, pos)
     if cmd_name is None:
+        # Check if we have an address-only command (e.g., "7" to go to block 7)
+        if addr1 is not None and pos >= len(line):
+            # Address only - implicit "goto" command
+            return Command(name="", addr1=addr1, addr2=addr2)
         raise ParseError(f"unknown command at position {pos}")
 
     # For dest commands, try to parse destination address

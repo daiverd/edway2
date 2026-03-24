@@ -5,6 +5,9 @@ virtual view over the timeline - the same audio can be viewed as
 different numbers of blocks depending on block_duration_ms.
 
 Blocks are 1-indexed (block 1 is the first block, like ed line numbers).
+
+Gaps (silence) count as blocks - they're just silent content. The user
+doesn't need to know whether a block is a Clip or Gap internally.
 """
 
 from dataclasses import dataclass
@@ -16,7 +19,7 @@ class BlockView:
     """Virtual block view over a timeline duration.
 
     Attributes:
-        duration_seconds: Total timeline duration in seconds.
+        duration_seconds: Total timeline duration in seconds (including gaps).
         block_duration_ms: Duration of each block in milliseconds.
     """
 
