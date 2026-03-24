@@ -21,7 +21,18 @@ uv pip install edway2
 
 On Ubuntu/Debian:
 ```bash
-sudo apt install portaudio19-dev
+sudo apt install libportaudio2
+```
+
+On WSL2:
+```bash
+sudo apt install libportaudio2 libasound2-plugins
+```
+
+Create `~/.asoundrc`:
+```
+pcm.default pulse
+ctl.default pulse
 ```
 
 On macOS:
