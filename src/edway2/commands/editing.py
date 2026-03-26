@@ -157,7 +157,8 @@ def extract_clips_in_range(track: Track, start: float, end: float) -> list[Clip]
             fade_in=clip.fade_in if overlap_start == clip_start else 0.0,
             fade_out=clip.fade_out if overlap_end == clip_end else 0.0,
         )
-        extracted.append(extracted_clip)
+        if extracted_clip.duration > 1e-12:
+            extracted.append(extracted_clip)
 
     return extracted
 
@@ -206,7 +207,10 @@ def delete_range(track: Track, start: float, end: float) -> None:
                 fade_in=0.0,
                 fade_out=clip.fade_out,
             )
-            new_clips.extend([before, after])
+            if before.duration > 1e-12:
+                new_clips.append(before)
+            if after.duration > 1e-12:
+                new_clips.append(after)
         elif clip_start < start:
             # Overlaps at end - trim end
             trimmed = Clip(
@@ -218,7 +222,8 @@ def delete_range(track: Track, start: float, end: float) -> None:
                 fade_in=clip.fade_in,
                 fade_out=0.0,
             )
-            new_clips.append(trimmed)
+            if trimmed.duration > 1e-12:
+                new_clips.append(trimmed)
         else:
             # Overlaps at start - trim start
             trim_amount = end - clip_start
@@ -231,7 +236,8 @@ def delete_range(track: Track, start: float, end: float) -> None:
                 fade_in=0.0,
                 fade_out=clip.fade_out,
             )
-            new_clips.append(trimmed)
+            if trimmed.duration > 1e-12:
+                new_clips.append(trimmed)
 
     track.clips = new_clips
 
