@@ -13,6 +13,12 @@ doesn't need to know whether a block is a Clip or Gap internally.
 from dataclasses import dataclass
 from math import ceil, floor
 
+# Tolerance for floating-point comparisons when checking if a value is
+# essentially an integer. Used in from_time() to ensure round-trip consistency:
+# from_time(to_time(b)) == b. A value like 2.9999999999 (within this epsilon
+# of 3.0) is treated as exactly 3.0.
+FLOAT_EPSILON = 1e-9
+
 
 @dataclass
 class BlockView:
@@ -86,7 +92,7 @@ class BlockView:
         # Round to nearest integer when within floating-point epsilon,
         # so that from_time(to_time(b)) == b holds exactly.
         rounded = round(raw)
-        if abs(raw - rounded) < 1e-9:
+        if abs(raw - rounded) < FLOAT_EPSILON:
             raw = rounded
         return floor(raw) + 1
 
