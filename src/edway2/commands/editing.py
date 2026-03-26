@@ -3,6 +3,11 @@
 from dataclasses import replace
 
 from edway2.commands import command
+
+# Minimum duration threshold for valid clips. Clips with duration at or below
+# this value are considered degenerate (typically from floating-point boundary
+# alignment) and are filtered out during extract/delete operations.
+MIN_CLIP_DURATION = 1e-12
 from edway2.parser import Command
 from edway2.commands.playback import resolve_address
 from edway2.session import Clip, Track
@@ -157,7 +162,7 @@ def extract_clips_in_range(track: Track, start: float, end: float) -> list[Clip]
             fade_in=clip.fade_in if overlap_start == clip_start else 0.0,
             fade_out=clip.fade_out if overlap_end == clip_end else 0.0,
         )
-        if extracted_clip.duration > 1e-12:
+        if extracted_clip.duration > MIN_CLIP_DURATION:
             extracted.append(extracted_clip)
 
     return extracted
@@ -207,9 +212,9 @@ def delete_range(track: Track, start: float, end: float) -> None:
                 fade_in=0.0,
                 fade_out=clip.fade_out,
             )
-            if before.duration > 1e-12:
+            if before.duration > MIN_CLIP_DURATION:
                 new_clips.append(before)
-            if after.duration > 1e-12:
+            if after.duration > MIN_CLIP_DURATION:
                 new_clips.append(after)
         elif clip_start < start:
             # Overlaps at end - trim end
@@ -222,7 +227,7 @@ def delete_range(track: Track, start: float, end: float) -> None:
                 fade_in=clip.fade_in,
                 fade_out=0.0,
             )
-            if trimmed.duration > 1e-12:
+            if trimmed.duration > MIN_CLIP_DURATION:
                 new_clips.append(trimmed)
         else:
             # Overlaps at start - trim start
@@ -236,7 +241,7 @@ def delete_range(track: Track, start: float, end: float) -> None:
                 fade_in=0.0,
                 fade_out=clip.fade_out,
             )
-            if trimmed.duration > 1e-12:
+            if trimmed.duration > MIN_CLIP_DURATION:
                 new_clips.append(trimmed)
 
     track.clips = new_clips
