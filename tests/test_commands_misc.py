@@ -79,3 +79,88 @@ class TestLabel:
         assert not tmp_project.is_dirty
         tmp_project.execute("l New Label")
         assert tmp_project.is_dirty
+
+
+class TestClips:
+    """Tests for clips command."""
+
+    def test_clips_empty_track(self, tmp_project, capsys):
+        """clips on empty track shows (empty)."""
+        tmp_project.execute("clips")
+        output = capsys.readouterr().out
+        assert "(empty)" in output
+        assert "Track 1" in output
+
+    def test_clips_shows_clip_info(self, tmp_project, sample_wav, capsys):
+        """clips shows clip with block range and source."""
+        tmp_project.execute(f"r {sample_wav}")
+        tmp_project.execute("clips")
+        output = capsys.readouterr().out
+        assert "Track 1" in output
+        assert "1-1" in output  # 1-second clip = 1 block at 1000ms
+        assert "test.wav" in output
+        assert "[0.0-1.0]" in output  # source time range
+
+    def test_clips_shows_gap(self, tmp_project, sample_wav_2sec, capsys):
+        """clips shows gaps between clips."""
+        # Load 2-second clip -> blocks 1-2
+        tmp_project.execute(f"r {sample_wav_2sec}")
+        # Delete block 1 (non-ripple) -> gap at block 1, clip remains at block 2
+        tmp_project.execute("1d")
+        tmp_project.execute("clips")
+        output = capsys.readouterr().out
+        assert "(gap)" in output
+
+    def test_clips_shows_crossfade(self, tmp_project, sample_wav_2sec, capsys):
+        """clips shows crossfade when clips overlap."""
+        from edway2.session import Clip
+
+        # Manually create overlapping clips
+        track = tmp_project.session.tracks[0]
+
+        # Copy file to sources first
+        from edway2.audio import copy_to_sources, read_audio_info
+        dest = copy_to_sources(sample_wav_2sec, tmp_project.path / "sources")
+        info = read_audio_info(dest)
+
+        # Clip 1: blocks 1-2 (0-2 seconds)
+        clip1 = Clip(
+            source=f"sources/{dest.name}",
+            source_start=0.0,
+            source_end=2.0,
+            position=0.0,
+        )
+        # Clip 2: blocks 2-3 (1-3 seconds) - overlaps at block 2
+        clip2 = Clip(
+            source=f"sources/{dest.name}",
+            source_start=0.0,
+            source_end=2.0,
+            position=1.0,
+        )
+        track.clips = [clip1, clip2]
+
+        tmp_project.execute("clips")
+        output = capsys.readouterr().out
+        assert "(xf" in output  # crossfade indicator
+
+    def test_clips_multiple_tracks(self, tmp_project, sample_wav, capsys):
+        """clips shows all tracks."""
+        tmp_project.execute(f"r {sample_wav}")
+        tmp_project.execute("addtrack Vocals")
+        tmp_project.execute("tr 2")
+        tmp_project.execute(f"r {sample_wav}")
+
+        tmp_project.execute("clips")
+        output = capsys.readouterr().out
+        assert "Track 1" in output
+        assert "Track 2" in output
+        assert "Vocals" in output
+
+    def test_clips_shows_track_indicators(self, tmp_project, sample_wav, capsys):
+        """clips shows current/muted/soloed indicators."""
+        tmp_project.execute(f"r {sample_wav}")
+        tmp_project.execute("mute")  # mute track 1
+
+        tmp_project.execute("clips")
+        output = capsys.readouterr().out
+        assert "[" in output and "M" in output  # muted indicator

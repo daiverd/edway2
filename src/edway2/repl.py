@@ -1,11 +1,38 @@
 """REPL (Read-Eval-Print Loop) for edway2."""
 
 from prompt_toolkit import PromptSession
+from prompt_toolkit.completion import Completer, Completion, PathCompleter
+from prompt_toolkit.document import Document
 from prompt_toolkit.history import FileHistory
 from pathlib import Path
 
 from edway2 import __version__
 from edway2.project import Project
+
+
+# Commands that take file path arguments
+FILE_COMMANDS = ("r",)
+
+
+class EdwayCompleter(Completer):
+    """Context-aware completer for edway commands."""
+
+    def __init__(self):
+        self.path_completer = PathCompleter(expanduser=True)
+
+    def get_completions(self, document, complete_event):
+        text = document.text_before_cursor
+
+        for cmd in FILE_COMMANDS:
+            prefix = cmd + " "
+            if text.startswith(prefix):
+                # Extract the path portion after the command
+                path_text = text[len(prefix):]
+                path_doc = Document(path_text, len(path_text))
+                yield from self.path_completer.get_completions(
+                    path_doc, complete_event
+                )
+                return
 
 
 def get_history_path() -> Path:
@@ -47,6 +74,7 @@ def run_repl(project_path: str | None) -> int:
 
     prompt_session = PromptSession(
         history=FileHistory(str(get_history_path())),
+        completer=EdwayCompleter(),
     )
 
     while True:

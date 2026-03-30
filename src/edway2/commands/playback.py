@@ -136,6 +136,102 @@ def db_to_linear(db: float) -> float:
     return 10 ** (db / 20)
 
 
+def find_clip_overlaps(track, clip) -> list[tuple[float, float, str]]:
+    """Find overlaps between a clip and other clips on the same track.
+
+    Args:
+        track: Track containing the clips.
+        clip: The clip to check for overlaps.
+
+    Returns:
+        List of (overlap_start, overlap_end, fade_type) tuples.
+        fade_type is 'in' if this clip should fade in, 'out' if fade out.
+    """
+    clip_start = track.start_time + clip.position
+    clip_end = clip_start + clip.duration
+    overlaps = []
+
+    for other in track.clips:
+        if other is clip:
+            continue
+
+        other_start = track.start_time + other.position
+        other_end = other_start + other.duration
+
+        # Check for overlap
+        if other_end <= clip_start or other_start >= clip_end:
+            continue
+
+        # Calculate overlap region
+        overlap_start = max(clip_start, other_start)
+        overlap_end = min(clip_end, other_end)
+
+        if other_start < clip_start:
+            # Other clip started first, this clip fades IN
+            overlaps.append((overlap_start, overlap_end, 'in'))
+        elif other_start > clip_start:
+            # This clip started first, this clip fades OUT
+            overlaps.append((overlap_start, overlap_end, 'out'))
+        # If same start time, no fade (ambiguous)
+
+    return overlaps
+
+
+def apply_crossfade(
+    data: np.ndarray,
+    sample_rate: int,
+    data_start_time: float,
+    overlaps: list[tuple[float, float, str]],
+) -> np.ndarray:
+    """Apply crossfade envelopes to audio data.
+
+    Args:
+        data: Audio data array (frames, channels).
+        sample_rate: Sample rate of the data.
+        data_start_time: Global timeline time corresponding to data[0].
+        overlaps: List of (overlap_start, overlap_end, fade_type) from find_clip_overlaps.
+
+    Returns:
+        Audio data with fades applied.
+    """
+    if not overlaps:
+        return data
+
+    data = data.copy()  # Don't modify original
+    data_end_time = data_start_time + len(data) / sample_rate
+
+    for overlap_start, overlap_end, fade_type in overlaps:
+        # Clamp overlap to data range
+        fade_start = max(overlap_start, data_start_time)
+        fade_end = min(overlap_end, data_end_time)
+
+        if fade_end <= fade_start:
+            continue
+
+        # Convert to sample indices within data
+        start_sample = int((fade_start - data_start_time) * sample_rate)
+        end_sample = int((fade_end - data_start_time) * sample_rate)
+
+        start_sample = max(0, start_sample)
+        end_sample = min(len(data), end_sample)
+
+        if end_sample <= start_sample:
+            continue
+
+        num_samples = end_sample - start_sample
+
+        # Create linear fade envelope
+        if fade_type == 'in':
+            envelope = np.linspace(0, 1, num_samples).reshape(-1, 1)
+        else:  # fade_type == 'out'
+            envelope = np.linspace(1, 0, num_samples).reshape(-1, 1)
+
+        # Apply envelope
+        data[start_sample:end_sample] *= envelope
+
+    return data
+
+
 def render_track(
     project: "Project",
     track,
@@ -194,6 +290,11 @@ def render_track(
                 # Apply clip gain
                 if clip.gain != 0.0:
                     data = data * db_to_linear(clip.gain)
+
+                # Apply crossfades for overlapping clips
+                overlaps = find_clip_overlaps(track, clip)
+                if overlaps:
+                    data = apply_crossfade(data, sr, overlap_start, overlaps)
 
                 # Where in output buffer to write
                 out_start = int((overlap_start - start_time) * sample_rate)

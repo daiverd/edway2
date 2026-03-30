@@ -11,9 +11,14 @@ edway2 is a non-destructive multitrack audio editor with a line-editor (ed/vim s
 ```bash
 uv run pytest                                    # Run all tests
 uv run pytest tests/test_parser.py::test_name -v # Run single test
+uv run pytest tests/test_properties.py -v        # Run property/hypothesis tests
 uv run edway2                                    # Run application
 uv run edway2 /path/to/project                   # Open/create project
 ```
+
+## System Requirements
+
+Requires PortAudio for audio playback. On WSL2, also needs PulseAudio config (`~/.asoundrc` with `pcm.default pulse`).
 
 ## Architecture
 
@@ -34,7 +39,9 @@ User input → repl.py → parser.py → commands/*.py → project.py → sessio
 
 **Parser** (`parser.py`): ed-style grammar: `[range] cmd [dest] [arg]`. Addresses: number, `.` (current), `$` (last), `'x` (mark), `@M:SS` (time). Returns `Command` dataclass.
 
-**Command Registry** (`commands/__init__.py`): `@command("name")` decorator registers handlers. Handler signature: `(project: Project, cmd: Command) -> None`.
+**Command Registry** (`commands/__init__.py`): `@command("name")` decorator registers handlers. Handler signature: `(project: Project, cmd: Command) -> None`. Commands are organized by module (playback.py, editing.py, files.py, etc.) and auto-registered on import.
+
+**Errors** (`errors.py`): Exception hierarchy - `EdwayError` base with `ParseError`, `RangeError`, `FileError`, `AudioError`.
 
 ### Position-Based Clips (vs sequential)
 Clips have absolute `position` in track (seconds). Gaps are implicit - no clip at a position = silence. This simplifies editing: delete just removes clips, no gap management needed. OTIO is only used for export interchange.
@@ -46,11 +53,15 @@ Every edit auto-commits the `.edway` file. `u` navigates back, `U` forward. `_un
 
 **TDD**: Write tests first. `SPEC.md` defines all behavior.
 
+**Property tests**: `tests/test_properties.py` uses hypothesis for property-based testing (e.g., block time round-trips).
+
 **Phase status**: Phases 0-13 complete (through Export). See `SPEC.md` for remaining phases (Effects, Regions, OTIO export, Plugins).
 
 **Test files**: `tests/test_files/` contains audio for manual testing. Don't modify directly.
 
 **Reference**: Original C code in `reference/` for behavioral reference.
+
+**Project folder structure**: Each project contains `<name>.edway` (session JSON), `sources/` (imported audio), `renders/` (exported audio), and `.git/` (undo history). Sources and renders are gitignored.
 
 ## Design Decisions
 

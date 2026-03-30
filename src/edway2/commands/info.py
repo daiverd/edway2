@@ -1,4 +1,4 @@
-"""Info commands: ?, =, sr, nc, ms, nb."""
+"""Info commands: ?, =, sr, nc, ms, nb, clips."""
 
 import re
 from math import ceil
@@ -8,6 +8,23 @@ from edway2.parser import Command
 
 if True:  # TYPE_CHECKING workaround for circular import
     from edway2.project import Project
+
+
+def format_seconds(seconds: float) -> str:
+    """Format seconds as M:SS.s or SS.s.
+
+    Args:
+        seconds: Time in seconds.
+
+    Returns:
+        Formatted string with one decimal place.
+    """
+    minutes = int(seconds // 60)
+    secs = seconds % 60
+    if minutes == 0:
+        return f"{secs:.1f}"
+    else:
+        return f"{minutes}:{secs:04.1f}"
 
 
 def display_time(ms: int) -> str:
@@ -206,3 +223,120 @@ def cmd_nb(project: "Project", cmd: Command) -> None:
             print(f"? invalid number: {cmd.arg}")
     else:
         print(f"blocks: {project.blocks.count}")
+
+
+@command("clips")
+def cmd_clips(project: "Project", cmd: Command) -> None:
+    """Show clip layout for all tracks.
+
+    Displays clips with block ranges, source files, and crossfade regions.
+
+    Usage:
+        clips     - show all clips on all tracks
+    """
+    blocks = project.blocks
+    session = project.session
+
+    if not session.tracks:
+        print("(no tracks)")
+        return
+
+    for track_idx, track in enumerate(session.tracks):
+        # Build track header with status indicators
+        indicators = []
+        if track_idx == session.current_track:
+            indicators.append("*")
+        if track.selected:
+            indicators.append("S")
+        if track.muted:
+            indicators.append("M")
+        if track.soloed:
+            indicators.append("O")
+
+        indicator_str = "".join(indicators)
+        if indicator_str:
+            print(f"Track {track_idx + 1} [{indicator_str}] {track.name}:")
+        else:
+            print(f"Track {track_idx + 1} {track.name}:")
+
+        if not track.clips:
+            print("  (empty)")
+            continue
+
+        # Sort clips by position
+        sorted_clips = sorted(track.clips, key=lambda c: c.position)
+
+        # Build list of segments (clips and gaps)
+        segments = []
+        current_pos = 0.0
+
+        for clip in sorted_clips:
+            clip_start = track.start_time + clip.position
+            clip_end = clip_start + clip.duration
+
+            # Check for gap before this clip
+            if clip_start > current_pos + 0.001:  # small tolerance
+                segments.append({
+                    'type': 'gap',
+                    'start': current_pos,
+                    'end': clip_start,
+                })
+
+            # Add the clip
+            segments.append({
+                'type': 'clip',
+                'clip': clip,
+                'start': clip_start,
+                'end': clip_end,
+            })
+
+            # Track furthest end point (clips can overlap)
+            current_pos = max(current_pos, clip_end)
+
+        # Find overlaps between clips
+        overlaps = []
+        for i, clip_a in enumerate(sorted_clips):
+            a_start = track.start_time + clip_a.position
+            a_end = a_start + clip_a.duration
+            for clip_b in sorted_clips[i + 1:]:
+                b_start = track.start_time + clip_b.position
+                b_end = b_start + clip_b.duration
+                if b_start < a_end:  # overlap
+                    overlap_start = b_start
+                    overlap_end = min(a_end, b_end)
+                    overlaps.append((overlap_start, overlap_end))
+
+        # Display segments
+        for seg in segments:
+            if seg['type'] == 'gap':
+                start_block = blocks.from_time(seg['start'])
+                end_block = blocks.from_time(seg['end'])
+                if end_block > start_block:
+                    print(f"  {start_block}-{end_block - 1}  (gap)")
+            else:
+                clip = seg['clip']
+                start_block = blocks.from_time(seg['start'])
+                end_block = max(start_block, blocks.from_time(seg['end'] - 0.001))
+
+                # Source file name (strip sources/ prefix)
+                source_name = clip.source
+                if source_name.startswith("sources/"):
+                    source_name = source_name[8:]
+
+                # Source time range
+                src_start = format_seconds(clip.source_start)
+                src_end = format_seconds(clip.source_end)
+
+                # Check if this clip is part of any overlap
+                clip_start = seg['start']
+                clip_end = seg['end']
+                xf_info = ""
+                for ov_start, ov_end in overlaps:
+                    if clip_start < ov_end and clip_end > ov_start:
+                        # This clip is involved in this overlap
+                        xf_start_block = blocks.from_time(ov_start)
+                        xf_end_block = blocks.from_time(ov_end - 0.001)
+                        xf_info = f" (xf {xf_start_block}-{xf_end_block})"
+                        break
+
+                print(f"  {start_block}-{end_block}  {source_name} [{src_start}-{src_end}]{xf_info}")

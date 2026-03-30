@@ -3,7 +3,9 @@
 import pytest
 from pathlib import Path
 
-from edway2.repl import run_repl
+from prompt_toolkit.document import Document
+
+from edway2.repl import run_repl, EdwayCompleter
 
 
 @pytest.fixture
@@ -82,3 +84,45 @@ def test_no_project_shows_message(mock_prompt, capsys):
     run_repl(None)
     captured = capsys.readouterr()
     assert "? no project open" in captured.out
+
+
+# --- Completer tests ---
+
+
+def test_completer_provides_path_completion_for_r_command(tmp_path):
+    """Test 'r ' triggers path completion."""
+    # Create a test file
+    test_file = tmp_path / "audio.wav"
+    test_file.touch()
+
+    completer = EdwayCompleter()
+
+    # Simulate typing "r aud" in the tmp_path directory
+    # PathCompleter returns the suffix to complete ("io.wav" for "aud" -> "audio.wav")
+    import os
+    old_cwd = os.getcwd()
+    try:
+        os.chdir(tmp_path)
+        doc = Document("r aud")
+        completions = list(completer.get_completions(doc, None))
+        texts = [c.text for c in completions]
+        # "aud" + "io.wav" = "audio.wav"
+        assert "io.wav" in texts
+    finally:
+        os.chdir(old_cwd)
+
+
+def test_completer_no_completion_for_other_commands():
+    """Test non-file commands don't trigger path completion."""
+    completer = EdwayCompleter()
+    doc = Document("p")  # play command
+    completions = list(completer.get_completions(doc, None))
+    assert completions == []
+
+
+def test_completer_handles_empty_input():
+    """Test empty input doesn't crash."""
+    completer = EdwayCompleter()
+    doc = Document("")
+    completions = list(completer.get_completions(doc, None))
+    assert completions == []

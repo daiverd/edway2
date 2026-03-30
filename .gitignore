@@ -40,6 +40,9 @@ htmlcov/
 .tox/
 .nox/
 
+# Property test reports (contain stale commit hashes)
+reports/
+
 # OS
 .DS_Store
 Thumbs.db

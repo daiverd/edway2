@@ -71,6 +71,7 @@ COMMANDS = [
     # Multi-letter commands
     "save", "load", "quit", "help",
     "addtrack", "rmtrack", "tracks", "track",
+    "clips",
     "mute", "solo",
     "regions", "region",  # longer first
     "split", "fxlist", "fxrm",
